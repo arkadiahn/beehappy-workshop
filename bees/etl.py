@@ -52,6 +52,7 @@ class RunResult:
     sensors_seeded: int = 0
     sensors_deactivated: int = 0
     unmapped_sensors: list[str] = field(default_factory=list)
+    orphan_hives: list[str] = field(default_factory=list)
     sensors: list[SensorResult] = field(default_factory=list)
     table_counts: dict[str, int] = field(default_factory=dict)
 
@@ -118,6 +119,15 @@ def run(
 
     result.sensors_deactivated = db.deactivate_missing_sensors(conn, sensor_ids)
     result.sensors_seeded = len(sensor_ids)
+
+    result.orphan_hives = db.orphan_hives(conn, [s.hive_name for s in topology.hives])
+    for name in result.orphan_hives:
+        logger.warning(
+            "Hive %r is in the database but not in hives.toml and has no sensors "
+            "(left over from a rename?). Delete it by hand once you are sure.",
+            name,
+        )
+
     if not dry_run:
         conn.commit()
 

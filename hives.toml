@@ -28,25 +28,45 @@
 latitude = 49.150000
 longitude = 9.216000
 
+# ---------------------------------------------------------------------------
+# COVER-MATERIAL EXPERIMENT
+#
+# The project is comparing three hive cover materials to see which holds the
+# most stable microclimate (ideal ~35 °C / ~60 % RH in the brood chamber):
+#
+#     Stock 1 = Plastikfolie   (plastic film)
+#     Stock 2 = Thermofolie    (thermal film)
+#     Stock 3 = Baumwollstoff  (cotton fabric)
+#
+# `comment` carries the cover material -- the Metabase scorecard reads it as
+# `cover_material`. Two things below are UNCONFIRMED and must be fixed before
+# any comparison is quoted as a result:
+#
+#   1. Which sensors share a hive (paired in API order -- a guess).
+#   2. Which hive has which cover material (not recorded anywhere in the API).
+#
+# Get both from the beekeeper, then edit here and re-run. Nothing else changes.
+# ---------------------------------------------------------------------------
+
 [[hives]]
-hive_name = "Hive 42-1"
-comment = "Bildungscampus building 42. Sensor grouping unverified."
+hive_name = "Stock 1"
+comment = "UNBESTÄTIGT — Abdeckung: Plastikfolie"
 sensors = [
-    "LoRa-A840411F645AE815",  # S31-LB
-    "LoRa-A8404160C85A7A7B",  # D23-LB
+    "LoRa-A840411F645AE815",  # S31-LB — temperature + humidity (experiment instrument)
+    "LoRa-A8404160C85A7A7B",  # D23-LB — 3-probe temperature
 ]
 
 [[hives]]
-hive_name = "Hive 42-2"
-comment = "Bildungscampus building 42. Sensor grouping unverified."
+hive_name = "Stock 2"
+comment = "UNBESTÄTIGT — Abdeckung: Thermofolie"
 sensors = [
     "LoRa-A8404138A188669C",  # S31-LB
     "LoRa-A84041892E5A7A68",  # D23-LB
 ]
 
 [[hives]]
-hive_name = "Hive 42-3"
-comment = "Bildungscampus building 42. Sensor grouping unverified."
+hive_name = "Stock 3"
+comment = "UNBESTÄTIGT — Abdeckung: Baumwollstoff"
 sensors = [
     "LoRa-A84041CC625AE81E",  # S31-LB
     "LoRa-A840419521864618",  # D23-LB
