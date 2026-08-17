@@ -1,0 +1,60 @@
+# Physical topology of the Digital Beehive installation.
+#
+# The API tells us which devices exist and what they measure, but NOT which
+# devices sit in which hive -- every device just reports location = "42".
+# That mapping lives here, and only here.
+#
+# >>> THE HIVE GROUPING BELOW IS A GUESS. <<<
+# Devices were paired S31-LB + D23-LB in the order the API returned them.
+# Confirm with the beekeeper and edit `sensors = [...]` as needed; the ETL
+# re-reads this file on every run and moves sensors between hives accordingly.
+# Nothing else in the codebase needs to change.
+#
+# Device inventory as reported by the API (2026-08-14):
+#   LoRa-2CF7F1C0613005BC   LoRaWAN SenseCAP-S2120   weather station
+#   LoRa-A840411F645AE815   LoRaWAN Dragino-S31-LB   hive temperature + humidity
+#   LoRa-A8404138A188669C   LoRaWAN Dragino-S31-LB   hive temperature + humidity
+#   LoRa-A84041CC625AE81E   LoRaWAN Dragino-S31-LB   hive temperature + humidity
+#   LoRa-A8404160C85A7A7B   LoRaWAN Dragino-D23-LB   3-probe temperature
+#   LoRa-A84041892E5A7A68   LoRaWAN Dragino-D23-LB   3-probe temperature
+#   LoRa-A840419521864618   LoRaWAN Dragino-D23-LB   3-probe temperature
+#
+# Any device found in the API but missing from this file is still loaded --
+# it is registered as a sensor with hive_id = NULL and logged as a warning.
+
+# Optional: coordinates used when the API reports no latitude/longitude
+# (which is currently the case for every device). Bildungscampus Heilbronn.
+[defaults]
+latitude = 49.150000
+longitude = 9.216000
+
+[[hives]]
+hive_name = "Hive 42-1"
+comment = "Bildungscampus building 42. Sensor grouping unverified."
+sensors = [
+    "LoRa-A840411F645AE815",  # S31-LB
+    "LoRa-A8404160C85A7A7B",  # D23-LB
+]
+
+[[hives]]
+hive_name = "Hive 42-2"
+comment = "Bildungscampus building 42. Sensor grouping unverified."
+sensors = [
+    "LoRa-A8404138A188669C",  # S31-LB
+    "LoRa-A84041892E5A7A68",  # D23-LB
+]
+
+[[hives]]
+hive_name = "Hive 42-3"
+comment = "Bildungscampus building 42. Sensor grouping unverified."
+sensors = [
+    "LoRa-A84041CC625AE81E",  # S31-LB
+    "LoRa-A840419521864618",  # D23-LB
+]
+
+# Devices that belong to no hive (hive_id stays NULL). The weather station
+# measures ambient conditions for the whole site.
+[unassigned]
+sensors = [
+    "LoRa-2CF7F1C0613005BC",  # S2120 weather station
+]
