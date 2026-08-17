@@ -1,0 +1,388 @@
+openapi: 3.0.1
+info:
+  version: v0.8.18
+  title: Digital Beehive
+  termsOfService: https://bildungscampus.hn/nutzungsbedingungen-bildungscampuslife/
+  description: |
+    <img alt="bee-hive" src="https://sit-bildungscamp-lvzt-run-74sv-prod.apigee.io/files/digital_beehive.png" />
+    <br>
+
+    <b><a href="https://www.youtube.com/watch?v=kx0h0rbZp7A" target="_blank">🔴 LIVESTREAM 🎞️🎥</a></b>
+
+    **Deutsch:**
+    Das Projekt „Digitaler Bienenstock“ nutzt fortschrittliche Sensortechnologie, um die Lebensbedingungen von Bienen zu überwachen und wertvolle Erkenntnisse zu gewinnen. Hierfür werden verschiedene Sensoren eingesetzt, die Temperatur (in der Brutkammer, Futterkammer und im Stock), Luftfeuchtigkeit sowie die Konzentrationen von Gasen wie Stickstoffdioxid, Kohlendioxid und Sauerstoff messen. 
+    Zusätzlich wird ein Feinstaubsensor integriert, der ebenfalls zur Analyse der Luftqualität beiträgt. 
+
+    Weitere Daten werden durch eine Wetterstation erfasst, um die Umwelteinflüsse auf den Bienenstock zu verstehen.
+    Diese gesammelten Daten dienen als Grundlage für innovative Arbeitspakete, wie zum Beispiel die Entwicklung eines interaktiven Bienen-Dashboards mit Live-Daten und anschaulichen Diagrammen. 
+
+    Ein Computer Vision Modell wird entwickelt, um die Bienenpopulation zu zählen und ihre Flugmuster zu analysieren. Ein weiterer wichtiger Bestandteil des Projekts ist der Frequenz-Audio-Sensor, der in der Lage ist, das Summen der Bienen vom Summen der asiatischen Hornisse zu unterscheiden – ein entscheidender Faktor für die frühzeitige Erkennung von Bedrohungen.
+
+    Ein zentrales Ziel des Projekts ist die Entwicklung eines „Bienen-Index“, der auf Basis der gesammelten Daten Rückschlüsse auf die Stärke eines Bienenvolks zulässt. Der Index wird durch die Analyse von Parametern wie Population, Fleißigkeit und Honigertrag ermittelt und hilft dabei, den Gesundheitszustand des Bienenstocks zu bewerten.
+
+    **Englisch:**
+    The "Digital Beehive" project uses advanced sensor technology to monitor the living conditions of bees and gather valuable insights. Various sensors measure temperature (in the brood chamber, food chamber, and hive), humidity, as well as gas concentrations such as nitrogen dioxide, carbon dioxide, and oxygen. Additionally, a fine dust sensor is integrated to analyze air quality. Further data is collected by a weather station to better understand the environmental influences on the beehive.
+    The collected data serves as the foundation for innovative work packages, such as the development of an interactive bee dashboard displaying live data and informative diagrams. A computer vision model will be developed to count the bee population and analyze their flight patterns. Another key component of the project is the frequency audio sensor, capable of distinguishing the sound of bees from the hum of the Asian hornet – a crucial factor for early detection of threats.
+    A central goal of the project is to develop a "Bee Index" that allows conclusions about the strength of the bee colony based on the collected data. The index will be calculated by analyzing parameters such as population, industriousness, and honey yield, helping to assess the overall health of the beehive.
+
+    **[`Subscribe to the API`](https://data-library.smartcity.hn/my-apps/new-app)**<br><br>
+    **Kontakte / Contacts:** - Christian Harms (<a href="mailto:christian.harms@mail.schwarz">christian.harms@mail.schwarz</a>)<br><br>
+    **License:** [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)
+servers:
+  - url: https://apis.smartcity.hn/bildungscampus/iotplatform/digitalbeehive/v1/
+paths:
+  /authGroup:
+    get:
+      summary: Request all authGroups
+      description: Request all allowed authGroups for the given scenario.
+      tags:
+        - metadata-controller
+      deprecated: false
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/authGroupObject"
+  /authGroup/{authGroup}/entityId:
+    get:
+      summary: Request all entityIds and latest values
+      description: Request all allowed entity ids and the latest available values.
+      tags:
+        - entity-controller
+      deprecated: false
+      parameters:
+        - name: page
+          in: query
+          description: Positive integer
+          required: true
+          schema:
+            type: integer
+            format: 0-n
+        - name: authGroup
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/entityIdObject"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorType400"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorType403"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorType500"
+  /authGroup/{authGroup}/entityId/{entityId}/valueType/timeseries:
+    get:
+      summary: Request timeseries data
+      description: Request timeseries data.
+      tags:
+        - data-controller
+      deprecated: false
+      parameters:
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: keys
+          in: query
+          required: true
+          schema:
+            type: string
+            format: comma seperated list
+        - name: startTs
+          in: query
+          description: A long value representing the start timestamp of the time range in milliseconds, UTC.
+          required: true
+          schema:
+            type: number
+            format: unix timestamp in millis
+        - name: endTs
+          in: query
+          description: A long value representing the end timestamp of the time range in milliseconds, UTC.
+          required: true
+          schema:
+            type: number
+            format: unix timestamp in millis
+        - name: authGroup
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/timeseriesObject"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorType400"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorType403"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorType500"
+  /authGroup/{authGroup}/valueType:
+    get:
+      summary: Request all allowed valueTypes
+      description: Request all allowed valueTypes for the given authGroup.
+      tags:
+        - metadata-controller
+      deprecated: false
+      parameters:
+        - name: authGroup
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/valueTypeObject"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errorType403"
+components:
+  schemas:
+    authGroupObject:
+      properties:
+        authGroup:
+          $ref: "#/components/schemas/authGroupArray"
+    authGroupArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/authGroupArrayItem"
+    authGroupArrayItem:
+      description: Authentication groups describe a group of entities with the same usage that you can request within the given scenario.
+      properties:
+        authGroupName:
+          type: string
+          description: Name of the entity group you are allowed to request in this scenario.
+          example: vineyard_devices
+        authGroupEntityType:
+          type: string
+          description: Type of the entities in this group.
+          example: DEVICE
+    valueTypeObject:
+      properties:
+        valueType:
+          $ref: "#/components/schemas/valueTypeTypes"
+    valueTypeTypes:
+      properties:
+        ENTITY_FIELD:
+          $ref: "#/components/schemas/valueTypeTypesArrayEntityField"
+        SERVER_ATTRIBUTE:
+          $ref: "#/components/schemas/valueTypeTypesArrayServerAttribute"
+        TIME_SERIES:
+          $ref: "#/components/schemas/valueTypeTypesArrayTimeseries"
+    valueTypeTypesArrayEntityField:
+      type: array
+      description: Entity fields describe the name, type and other system properties of an entity. They are predefined by the system. You will get all their values with the entityId call.
+      items:
+        $ref: "#/components/schemas/valueTypeTypesArrayEntityFieldItem"
+    valueTypeTypesArrayEntityFieldItem:
+      properties:
+        key:
+          type: string
+          description: Key of the entity field.
+          example: name
+        description:
+          type: string
+          description: Description of the value.
+          example: Name of the device.
+    valueTypeTypesArrayServerAttribute:
+      type: array
+      description: Server attributes are set on most entities to describe their meaning within a scenario like e.g. serialnumber. You will get all their values with the entityId call.
+      items:
+        $ref: "#/components/schemas/valueTypeTypesArrayServerAttributeItem"
+    valueTypeTypesArrayServerAttributeItem:
+      properties:
+        key:
+          type: string
+          description: Key of the entity field.
+          example: serialnumber
+        description:
+          type: string
+          description: Description of the value.
+          example: Serialnumber of the device.
+    valueTypeTypesArrayTimeseries:
+      type: array
+      description: Timeseries values are values that change over time like e.g. temperature. You will get all their latest values with the entityId call. You can also use the keys in the timeseries call to get more values over time.
+      items:
+        $ref: "#/components/schemas/valueTypeTypesArrayTimeseriesItem"
+    valueTypeTypesArrayTimeseriesItem:
+      properties:
+        key:
+          type: string
+          description: Key of the entity field.
+          example: temperature
+        description:
+          type: string
+          description: Description of the value.
+          example: Outside temperature of the weatherstation.
+        unit:
+          type: string
+          description: Unit of the value.
+          example: °C
+    entityIdObject:
+      properties:
+        entities:
+          $ref: "#/components/schemas/entityIdObjectArray"
+        totalPages:
+          type: integer
+          example: 1
+        totalElements:
+          type: integer
+          example: 1
+        hasNext:
+          type: boolean
+          example: false
+    entityIdObjectArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/entityIdObjectArrayItem"
+    entityIdObjectArrayItem:
+      properties:
+        entityId:
+          description: Basic information of the entity in the system.
+          properties:
+            entityType:
+              type: string
+              enum:
+                - DEVICE
+                - ASSET
+            id:
+              type: string
+              format: uuid
+              description: Unique in the system.
+        ENTITY_FIELD:
+          description: All entity fields you are allowed to see based on valueType request.
+          properties:
+            name:
+              type: string
+              example: LoRa-A84041791186460D
+              description: Unique in the system.
+            type:
+              type: string
+              example: LoRaWAN Dragino-D20S-LB
+        SERVER_ATTRIBUTE:
+          description: All server attributes you are allowed to see based on valueType request.
+          properties:
+            latitude:
+              properties:
+                ts:
+                  type: number
+                  format: timestamp
+                  description: Timestamp of when attribute has been saved last.
+                  example: 1712909483498
+                value:
+                  type: string
+                  description: Value of the attribute.
+                  example: "49.169874"
+        TIME_SERIES:
+          description: All time series values you are allowed to see based on valueType request.
+          properties:
+            temperature:
+              properties:
+                ts:
+                  type: number
+                  format: timestamp
+                  description: Timestamp of the latest timeseries value.
+                  example: 1712909483498
+                value:
+                  type: string
+                  description: Latest timeseries value.
+                  example: "5.14"
+    timeseriesObject:
+      description: Keys of all requested values, where data is available in the requested timerange. The values are sorted from oldest to newest. There is an internal limit of 500 messages per request. Use startTs and endTs to make sure you got all data.
+      properties:
+        timeseries:
+          properties:
+            temperature:
+              type: array
+              items:
+                $ref: "#/components/schemas/timeseriesObjectArrayItem"
+    timeseriesObjectArrayItem:
+      description: Array of values in the requested timerange.
+      properties:
+        ts:
+          type: number
+          format: timestamp
+          description: Timestamp of the timeseries value.
+          example: 1712909483498
+        value:
+          type: string
+          description: Timeseries value.
+          example: "5.14"
+    errorType400:
+      properties:
+        errorText:
+          type: string
+          description: More detailed description of error.
+          example: Query parameter 'page' is not an positive integer.
+        errorCode:
+          type: number
+          example: 400
+    errorType403:
+      properties:
+        errorText:
+          type: string
+          description: More detailed description of error.
+          example: "No rights to access auth group: vineyard_devices"
+        errorCode:
+          type: number
+          example: 403
+    errorType500:
+      properties:
+        errorText:
+          type: string
+          example: Internal server error [2]
+        errorCode:
+          type: number
+          example: 500
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: x-apikey
+      in: query
+      description: Authentication guide can be found in https://www.ourconsumerguide.
+security:
+  - api_key: []
