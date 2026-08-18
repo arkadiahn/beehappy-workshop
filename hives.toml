@@ -22,11 +22,16 @@
 # Any device found in the API but missing from this file is still loaded --
 # it is registered as a sensor with hive_id = NULL and logged as a warning.
 
-# Optional: coordinates used when the API reports no latitude/longitude
-# (which is currently the case for every device). Bildungscampus Heilbronn.
+# Optional surveyed coordinates, applied when the API reports none -- which is
+# always, since latitude/longitude come back empty for every device.
+#
+# DELIBERATELY EMPTY. These were previously filled with an approximate campus
+# centroid, which wrote the same invented point onto all seven sensors and read
+# as real data. An honest NULL beats a plausible wrong number. Fill these in
+# only with coordinates somebody actually measured.
 [defaults]
-latitude = 49.150000
-longitude = 9.216000
+# latitude = 49.15182
+# longitude = 9.21530
 
 # ---------------------------------------------------------------------------
 # COVER-MATERIAL EXPERIMENT

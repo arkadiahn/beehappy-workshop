@@ -113,6 +113,7 @@ def run(
             sensor_name=device.name,
             sensor_type=device.device_type,
             hive_id=hive_ids.get(hive_name) if hive_name else None,
+            site=device.location,
             latitude=device.latitude if device.latitude is not None else topology.default_latitude,
             longitude=device.longitude if device.longitude is not None else topology.default_longitude,
         )
