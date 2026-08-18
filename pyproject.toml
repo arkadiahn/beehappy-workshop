@@ -1,29 +1,28 @@
 [project]
-name = "the-bees"
+name = "beehappy-workshop"
 version = "0.1.0"
-description = "ETL pipeline loading the Bildungscampus Digital Beehive API into PostgreSQL"
+description = "Data Foundation workshop: turning raw BeeHappy beehive sensor tables into one ML-ready dataframe"
 readme = "README.md"
 requires-python = ">=3.13"
 
-# Kept deliberately small: this is what the Railway cron container installs.
-# psycopg[binary] ships its own libpq, so the image needs no system Postgres.
+# What a student needs. `uv sync` alone is enough to open the notebook and work
+# through every exercise -- no extras, no database, no credentials.
 dependencies = [
-    "psycopg[binary]>=3.3.4",
-    "python-dotenv>=1.2.2",
-    "requests>=2.34.2",
-]
-
-[project.optional-dependencies]
-# Notebook / data-analysis stack. Not installed in the deployed container.
-#   uv sync --extra analysis
-analysis = [
     "jupyter>=1.1.1",
-    # Parquet engine for the workshop snapshot; pandas needs it for read/to_parquet.
-    "pyarrow>=18.0.0",
     "matplotlib>=3.11.1",
     "numpy>=2.5.2",
     "pandas>=3.0.5",
+    # Parquet engine. The snapshot ships as Parquet so dtypes and timestamps
+    # survive the round trip, which CSV would not guarantee.
+    "pyarrow>=18.0.0",
     "seaborn>=0.13.2",
+]
+
+[project.optional-dependencies]
+# Only the instructor needs this, and only to re-cut the snapshot from the live
+# database:  uv sync --extra export
+export = [
+    "psycopg[binary]>=3.3.4",
 ]
 
 [dependency-groups]
@@ -32,6 +31,4 @@ dev = [
 ]
 
 [tool.uv]
-# Local development gets the analysis stack by default; the Dockerfile passes
-# --no-default-groups --no-editable to skip it.
 default-groups = ["dev"]
