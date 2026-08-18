@@ -18,6 +18,8 @@ dependencies = [
 #   uv sync --extra analysis
 analysis = [
     "jupyter>=1.1.1",
+    # Parquet engine for the workshop snapshot; pandas needs it for read/to_parquet.
+    "pyarrow>=18.0.0",
     "matplotlib>=3.11.1",
     "numpy>=2.5.2",
     "pandas>=3.0.5",
