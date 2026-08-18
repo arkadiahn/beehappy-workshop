@@ -11,3 +11,7 @@ wheels/
 
 # Secrets -- contains BILDUNGSCAMPUS_API_KEY and database credentials
 .env
+
+# Student output. The feature table is the thing they build; shipping a copy
+# would hand over the answer.
+workshop/out/
