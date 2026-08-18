@@ -114,6 +114,7 @@ def upsert_sensor(
     sensor_name: str,
     sensor_type: str | None,
     hive_id: int | None,
+    site: str | None = None,
     latitude: float | None = None,
     longitude: float | None = None,
 ) -> int:
@@ -127,11 +128,12 @@ def upsert_sensor(
     with conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO sensors (sensor_name, sensor_type, hive_id, location, is_active)
-            VALUES (%s, %s, %s, %s::point, TRUE)
+            INSERT INTO sensors (sensor_name, sensor_type, hive_id, site, location, is_active)
+            VALUES (%s, %s, %s, %s, %s::point, TRUE)
             ON CONFLICT (sensor_name) DO UPDATE SET
                 sensor_type = COALESCE(EXCLUDED.sensor_type, sensors.sensor_type),
                 hive_id     = EXCLUDED.hive_id,
+                site        = COALESCE(EXCLUDED.site, sensors.site),
                 location    = COALESCE(EXCLUDED.location, sensors.location),
                 is_active   = TRUE
             RETURNING id
@@ -140,6 +142,7 @@ def upsert_sensor(
                 _truncate(sensor_name, SENSOR_NAME_MAX, "sensor_name"),
                 _truncate(sensor_type, SENSOR_TYPE_MAX, "sensor_type"),
                 hive_id,
+                _truncate(site, SENSOR_NAME_MAX, "site"),
                 as_point(latitude, longitude),
             ),
         )
@@ -158,6 +161,34 @@ def deactivate_missing_sensors(
             (names,),
         )
         return cur.rowcount or 0
+
+
+def orphan_hives(conn: psycopg.Connection, declared_names: Iterable[str]) -> list[str]:
+    """Hives in the database that hives.toml no longer declares and that hold
+    no sensors.
+
+    Renaming a hive in hives.toml creates a new row (the upsert keys on
+    hive_name) and leaves the old one behind with nothing attached. Those
+    strays are harmless to the measurements -- readings hang off sensors, not
+    hives -- but they surface in a dashboard as empty hives. Reported, never
+    deleted: an empty hive can also be a real one whose sensors are away for
+    maintenance, and that is not a call this code should make.
+    """
+    names = list(declared_names)
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT h.hive_name
+            FROM hives h
+            LEFT JOIN sensors s ON s.hive_id = h.id
+            WHERE NOT (h.hive_name = ANY(%s))
+            GROUP BY h.hive_name
+            HAVING count(s.id) = 0
+            ORDER BY h.hive_name
+            """,
+            (names,),
+        )
+        return [row[0] for row in cur.fetchall()]
 
 
 # -------------------------------------------------------------------- facts

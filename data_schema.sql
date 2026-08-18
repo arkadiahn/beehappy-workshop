@@ -22,6 +22,13 @@ CREATE TABLE IF NOT EXISTS sensors (
     sensor_name VARCHAR(50) NOT NULL UNIQUE,
     sensor_type VARCHAR(50),
     hive_id SMALLINT,
+    -- The site name the API reports (currently "42" for every device). This is
+    -- the ONLY location fact the platform actually provides -- latitude and
+    -- longitude come back empty.
+    site VARCHAR(50),
+    -- Surveyed coordinates. Left NULL unless a human measures them; never
+    -- filled with a guess, because a plausible-looking wrong point is worse
+    -- than an honest NULL.
     location POINT,
     is_active BOOLEAN DEFAULT TRUE,
 
@@ -67,3 +74,14 @@ CREATE TABLE IF NOT EXISTS weather (
 -- Chronological scans per sensor ("last 24h for hive 2") are the dominant
 -- read pattern; the UNIQUE constraints above already index (sensor_id,
 -- recorded_at), so no additional indexes are needed.
+
+-- ---------------------------------------------------------------------------
+-- Migrations.
+--
+-- The CREATE TABLE statements above are IF NOT EXISTS, so they do nothing to a
+-- database that already has the table -- including adding a new column. These
+-- ALTERs are what actually converge an existing database, and they are
+-- idempotent, so --init-schema can run them on every scheduled load.
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE sensors ADD COLUMN IF NOT EXISTS site VARCHAR(50);

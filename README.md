@@ -59,25 +59,39 @@ configure; the schema creates itself on the first run.
 
 ### 2. Deploy the ETL as a cron service
 
-Push this repo to GitHub, then in the same Railway project: **New → GitHub
-Repo** and pick it. `railway.json` is detected automatically and sets the
-Dockerfile build, the hourly schedule and `restartPolicyType: NEVER` (without
-that last one Railway would restart the finished job in a loop).
+**The service must be connected to a GitHub repo, not uploaded with `railway
+up`.** A CLI upload is a one-off snapshot: Railway reports `canRedeploy: false`
+on it and the cron scheduler has nothing to re-run, so the job builds, runs
+once, and then never fires again. This is silent — the deployment still says
+SUCCESS. Connect the repo instead:
 
-On the new service's **Variables** tab add:
+In the project: **New → GitHub Repo**, pick the repo and branch. On the
+service's **Variables** tab add:
 
 | Variable | Value |
 |---|---|
 | `BILDUNGSCAMPUS_API_KEY` | your key |
-| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `DATABASE_URL` | `${{beehive-db.DATABASE_URL}}` |
 
-That `${{Postgres.DATABASE_URL}}` is a Railway *reference variable*, not a
+That `${{beehive-db.DATABASE_URL}}` is a Railway *reference variable*, not a
 literal — it resolves to the private-network address, so traffic never leaves
-Railway and costs no egress. Type it exactly as shown.
+Railway and costs no egress. Substitute your Postgres service's name.
 
-The first run backfills 90 days and then exits; every later run takes a few
-seconds. Change the cadence via `cronSchedule` in `railway.json` (readings
-arrive every ~20 min, so hourly loses nothing).
+`railway.json` sets the Dockerfile build, the hourly schedule and
+`restartPolicyType: NEVER` (without that last one Railway restarts the finished
+job in a loop). Note it is **only read on GitHub-sourced deploys** — a `railway
+up` upload ignores it, in which case set the schedule and restart policy on the
+service directly:
+
+```bash
+railway api "mutation { serviceInstanceUpdate(
+  serviceId: \"<id>\", environmentId: \"<id>\",
+  input: { cronSchedule: \"17 * * * *\", restartPolicyType: NEVER }) }"
+```
+
+The first run backfills 90 days and then exits; later runs take seconds. Change
+the cadence via `cronSchedule` (readings arrive every ~20 min, so hourly loses
+nothing). Railway skips a scheduled run if the previous one is still going.
 
 ### 3. Connecting from your laptop
 
@@ -96,6 +110,44 @@ credentials are never sent over the public internet in the clear. Set
 
 Note the public proxy **does** bill egress, so prefer keeping bulk loads on the
 cron service and using the public URL for queries.
+
+## Dashboard (Metabase)
+
+`metabase/queries.sql` holds one SQL block per dashboard card, each verified
+against the live database. `metabase/00_readonly_role.sql` creates the
+`metabase_ro` role — Metabase only needs `SELECT`, and this dashboard is shown
+to students, so it should not connect as the superuser.
+
+Connect Metabase over the **private network** (no egress, database stays off the
+public internet for this path):
+
+| Field | Value |
+|---|---|
+| Host | `postgres-nnqo.railway.internal` |
+| Port | `5432` · Database `railway` · User `metabase_ro` |
+
+Two conventions the cards depend on:
+
+- **Fixed hive colors.** Set each hive's hue once in Metabase's series settings.
+  A filter that hides one hive must not repaint the others. Outside/ambient is
+  always neutral gray — it is context, not a fourth hive.
+- **No dual-axis charts.** Temperature and humidity are deliberately separate
+  cards. Two y-scales on one plot makes both unreadable.
+
+### What the experiment cards measure
+
+The project is comparing three cover materials for microclimate stability, so
+the dashboard reports three things, not one:
+
+| Card | Measure | Reading |
+|---|---|---|
+| Stability | `stddev_samp(temperature)` | how much the hive wanders |
+| Accuracy | `avg(abs(temperature - 35))` | how far it sits from the ideal |
+| Buffering | `regr_slope(hive_c, outside_c)` | °C the hive moves per 1 °C outside |
+
+Stability alone is not enough — **a hive can be perfectly stable at the wrong
+temperature**, and the current data contains exactly that case, so ranking on
+standard deviation alone picks the wrong material.
 
 ## Hive topology
 

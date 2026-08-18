@@ -130,6 +130,9 @@ def report(result: etl.RunResult, dry_run: bool = False) -> None:
     if result.unmapped_sensors:
         print(f"sensors without hive  {', '.join(result.unmapped_sensors)}")
         print("                      -> add them to hives.toml and re-run")
+    if result.orphan_hives:
+        print(f"empty hives in DB     {', '.join(result.orphan_hives)}")
+        print("                      -> not in hives.toml and no sensors; delete by hand")
 
     print(f"\n{'sensor':<24}{'table':<20}{'fetched':>9}{'rows':>7}{'new':>7}")
     print("-" * 72)
