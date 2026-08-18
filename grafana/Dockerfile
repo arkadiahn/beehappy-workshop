@@ -12,3 +12,5 @@ COPY provisioning/ /etc/grafana/provisioning/
 COPY dashboards/ /var/lib/grafana/dashboards/
 
 EXPOSE 3000
+
+LABEL org.opencontainers.image.title="beehappy-grafana"
