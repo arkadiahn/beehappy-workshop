@@ -1,0 +1,807 @@
+{
+  "uid": "beehappy-monitor",
+  "title": "BeeHappy — Bienenstock Monitor",
+  "tags": [
+    "beehappy",
+    "sensors"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "15m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Live-Überblick",
+      "id": 1,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Aktuelle Stocktemperatur",
+      "id": 2,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 18,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT m.recorded_at AS time,\n       h.hive_name   AS metric,\n       m.temperature AS value\nFROM hive_measurements m\nJOIN sensors s ON s.id = m.sensor_id\nJOIN hives   h ON h.id = s.hive_id\nWHERE m.temperature IS NOT NULL AND $__timeFilter(m.recorded_at)\nORDER BY 1",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 33
+              },
+              {
+                "color": "orange",
+                "value": 36
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "horizontal"
+      },
+      "description": "Letzter Messwert je Stock. Ideal ist ca. 35 °C."
+    },
+    {
+      "type": "stat",
+      "title": "Außentemperatur",
+      "id": 3,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT recorded_at AS time, 'Außen' AS metric, temperature AS value\nFROM weather\nWHERE temperature IS NOT NULL AND $__timeFilter(recorded_at)\nORDER BY 1",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      },
+      "description": "Wetterstation SenseCAP S2120. Kontext, kein Stock."
+    },
+    {
+      "type": "timeseries",
+      "title": "Stocktemperatur gegen Ideal (34–35 °C)",
+      "id": 4,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT * FROM (\n  SELECT $__timeGroupAlias(m.recorded_at, $__interval),\n         h.hive_name        AS metric,\n         avg(m.temperature) AS value\n  FROM hive_measurements m\n  JOIN sensors s ON s.id = m.sensor_id\n  JOIN hives   h ON h.id = s.hive_id\n  WHERE m.temperature IS NOT NULL AND $__timeFilter(m.recorded_at)\n  GROUP BY 1, 2\n  UNION ALL\n  SELECT $__timeGroupAlias(recorded_at, $__interval),\n         'Außentemperatur'  AS metric,\n         avg(temperature)   AS value\n  FROM weather\n  WHERE temperature IS NOT NULL AND $__timeFilter(recorded_at)\n  GROUP BY 1, 2\n) q ORDER BY time",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisLabel": "",
+            "pointSize": 5,
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 34
+              },
+              {
+                "color": "transparent",
+                "value": 35
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Außentemperatur"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "text"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    8,
+                    6
+                  ]
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Die grüne Zone ist der ideale Bereich der Brutkammer. Außentemperatur gestrichelt und grau — Kontext, kein Stock."
+    },
+    {
+      "type": "timeseries",
+      "title": "Luftfeuchtigkeit im Stock (ideal ca. 60 %)",
+      "id": 5,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(m.recorded_at, $__interval),\n       h.hive_name              AS metric,\n       avg(m.relative_humidity) AS value\nFROM hive_measurements m\nJOIN sensors s ON s.id = m.sensor_id\nJOIN hives   h ON h.id = s.hive_id\nWHERE m.relative_humidity IS NOT NULL AND $__timeFilter(m.recorded_at)\nGROUP BY 1, 2\nORDER BY 1",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisLabel": "",
+            "pointSize": 5,
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "semi-dark-blue",
+                "value": 55
+              },
+              {
+                "color": "transparent",
+                "value": 65
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Eigenes Panel — Temperatur und Feuchte teilen sich bewusst keine Achse."
+    },
+    {
+      "type": "table",
+      "title": "Sensor-Status",
+      "id": 6,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH readings AS (\n    SELECT sensor_id, recorded_at FROM hive_measurements\n    UNION ALL\n    SELECT sensor_id, recorded_at FROM weather\n)\nSELECT s.sensor_name                        AS \"Sensor\",\n       coalesce(h.hive_name, '— Wetter')    AS \"Stock\",\n       max(r.recorded_at)                   AS \"Letzte Messung\",\n       round(extract(epoch FROM now() - max(r.recorded_at)) / 60)::int\n                                            AS \"Minuten her\",\n       count(*) FILTER (WHERE r.recorded_at > now() - interval '24 hours')\n                                            AS \"Messungen 24h\",\n       round(100.0 * count(*) FILTER (WHERE r.recorded_at > now() - interval '24 hours')\n             / 72.0, 0)                     AS \"Abdeckung %\"\nFROM sensors s\nLEFT JOIN readings r ON r.sensor_id = s.id\nLEFT JOIN hives    h ON h.id = s.hive_id\nGROUP BY 1, 2\nORDER BY 4 NULLS LAST",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Minuten her"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 60
+                    },
+                    {
+                      "color": "red",
+                      "value": 180
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      },
+      "description": "Lücken in den Daten sind echte Sensorausfälle. Ohne dieses Panel sieht eine flache Linie aus wie ein stabiles Volk."
+    },
+    {
+      "type": "timeseries",
+      "title": "Wetter (Kontext)",
+      "id": 7,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(recorded_at, $__interval),\n       avg(temperature) AS \"Temperatur °C\",\n       avg(humidity)    AS \"Luftfeuchte %\",\n       avg(windspeed)   AS \"Wind m/s\"\nFROM weather\nWHERE $__timeFilter(recorded_at)\nGROUP BY 1\nORDER BY 1",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisLabel": "",
+            "pointSize": 5,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "row",
+      "title": "Abdeckungs-Experiment",
+      "id": 8,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "barchart",
+      "title": "Stabilität (niedriger = besser)",
+      "id": 9,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT h.hive_name                                     AS \"Stock\",\n       round(stddev_samp(m.temperature)::numeric, 2)   AS \"Stabilität σ °C\"\nFROM hive_measurements m\nJOIN sensors s ON s.id = m.sensor_id\nJOIN hives   h ON h.id = s.hive_id\nWHERE m.temperature IS NOT NULL AND $__timeFilter(m.recorded_at)\nGROUP BY 1\nORDER BY 2",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "axisLabel": "",
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xTickLabelRotation": 0,
+        "showValue": "always",
+        "stacking": "none",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "description": "Standardabweichung der Stocktemperatur. Misst nur die Schwankung — ein Stock kann stabil auf der falschen Temperatur liegen."
+    },
+    {
+      "type": "barchart",
+      "title": "Abweichung vom Ideal (niedriger = besser)",
+      "id": 10,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 32,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT h.hive_name                                      AS \"Stock\",\n       round(avg(abs(m.temperature - 35))::numeric, 2)  AS \"Abweichung vom Ideal °C\"\nFROM hive_measurements m\nJOIN sensors s ON s.id = m.sensor_id\nJOIN hives   h ON h.id = s.hive_id\nWHERE m.temperature IS NOT NULL AND $__timeFilter(m.recorded_at)\nGROUP BY 1\nORDER BY 2",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "axisLabel": "",
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xTickLabelRotation": 0,
+        "showValue": "always",
+        "stacking": "none",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "description": "Mittlerer Abstand zu 35 °C. Zusammen mit der Stabilität nötig: Stabilität allein kürt sonst den kältesten Stock."
+    },
+    {
+      "type": "barchart",
+      "title": "Pufferwirkung (niedriger = besser)",
+      "id": 11,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 32,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH hive AS (\n    SELECT date_trunc('hour', m.recorded_at) AS bucket,\n           h.hive_name                       AS hive,\n           avg(m.temperature)                AS hive_c\n    FROM hive_measurements m\n    JOIN sensors s ON s.id = m.sensor_id\n    JOIN hives   h ON h.id = s.hive_id\n    WHERE m.temperature IS NOT NULL AND $__timeFilter(m.recorded_at)\n    GROUP BY 1, 2\n),\noutside AS (\n    SELECT date_trunc('hour', recorded_at) AS bucket, avg(temperature) AS outside_c\n    FROM weather\n    WHERE temperature IS NOT NULL AND $__timeFilter(recorded_at)\n    GROUP BY 1\n)\nSELECT hive.hive AS \"Stock\",\n       round(regr_slope(hive.hive_c, outside.outside_c)::numeric, 3)\n            AS \"Pufferwirkung (°C je 1 °C außen)\"\nFROM hive JOIN outside USING (bucket)\nGROUP BY 1\nORDER BY 2",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "axisLabel": "",
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xTickLabelRotation": 0,
+        "showValue": "always",
+        "stacking": "none",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "description": "Steigung der Stocktemperatur gegen die Außentemperatur: um wie viel °C der Stock sich bewegt, wenn es draußen 1 °C wärmer wird. 0 wäre perfekte Dämmung, 1 ein ungedeckter Kasten."
+    },
+    {
+      "type": "table",
+      "title": "Tagesrhythmus — Mittelwert je Stunde",
+      "id": 12,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT extract(hour FROM m.recorded_at)::int AS hour,\n       h.hive_name                           AS hive,\n       round(avg(m.temperature)::numeric, 2) AS temp\nFROM hive_measurements m\nJOIN sensors s ON s.id = m.sensor_id\nJOIN hives   h ON h.id = s.hive_id\nWHERE m.temperature IS NOT NULL AND $__timeFilter(m.recorded_at)\nGROUP BY 1, 2\nORDER BY 1, 2",
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "hive",
+            "rowField": "hour",
+            "valueField": "temp"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "custom": {
+            "cellOptions": {
+              "type": "color-background"
+            },
+            "align": "center"
+          },
+          "color": {
+            "mode": "continuous-BlYlRd"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "description": "Zeigt, ob ein Volk die Temperatur über Nacht hält. Pivot per Transformation, damit die Stocknamen nicht im SQL stehen."
+    },
+    {
+      "type": "timeseries",
+      "title": "Drei-Sonden-Profil C1 (UNBESTÄTIGT)",
+      "id": 13,
+      "datasource": {
+        "type": "postgres",
+        "uid": "beehive"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "beehive"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(m.recorded_at, $__interval),\n       h.hive_name || ' – C1' AS metric, avg(m.temp_c1) AS value\nFROM hive_measurements m\nJOIN sensors s ON s.id = m.sensor_id\nJOIN hives   h ON h.id = s.hive_id\nWHERE m.temp_c1 IS NOT NULL AND $__timeFilter(m.recorded_at)\nGROUP BY 1, 2\nORDER BY 1",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisLabel": "",
+            "pointSize": 5,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Die API liefert keine Beschreibung für tempC1/C2/C3. Welche Sonde in der Brutkammer sitzt, ist unbestätigt — deshalb hier ohne Ideallinie."
+    }
+  ]
+}
