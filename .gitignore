@@ -12,6 +12,6 @@ wheels/
 # Secrets -- contains BILDUNGSCAMPUS_API_KEY and database credentials
 .env
 
-# Student output. The feature table is the thing they build; shipping a copy
-# would hand over the answer.
+# Student output: the extract they pull in Exercise 0 and the feature table they
+# build from it. Neither belongs in the repo -- one is data, the other the answer.
 workshop/out/
