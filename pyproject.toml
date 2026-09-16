@@ -5,24 +5,21 @@ description = "Data Foundation workshop: turning raw BeeHappy beehive sensor tab
 readme = "README.md"
 requires-python = ">=3.13"
 
-# What a student needs. `uv sync` alone is enough to open the notebook and work
-# through every exercise -- no extras, no database, no credentials.
+# What a student needs. `uv sync` plus a .env holding DATABASE_URL is enough to
+# work through every exercise. No data ships with the repo -- Exercise 0 pulls it.
 dependencies = [
     "jupyter>=1.1.1",
     "matplotlib>=3.11.1",
     "numpy>=2.5.2",
     "pandas>=3.0.5",
-    # Parquet engine. The snapshot ships as Parquet so dtypes and timestamps
+    # Postgres driver for the extract step.
+    "psycopg[binary]>=3.3.4",
+    # Parquet engine. The obvious format for the extract: dtypes and timestamps
     # survive the round trip, which CSV would not guarantee.
     "pyarrow>=18.0.0",
+    # Reads DATABASE_URL out of .env so no credential is typed into a notebook.
+    "python-dotenv>=1.0.1",
     "seaborn>=0.13.2",
-]
-
-[project.optional-dependencies]
-# Only the instructor needs this, and only to re-cut the snapshot from the live
-# database:  uv sync --extra export
-export = [
-    "psycopg[binary]>=3.3.4",
 ]
 
 [dependency-groups]

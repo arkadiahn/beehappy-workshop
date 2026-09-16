@@ -1,47 +1,55 @@
 # BeeHappy — Data Foundation workshop
 
-A half-day, hands-on workshop. You start with three raw tables from the BeeHappy
+A half-day, hands-on workshop. You start with three raw tables in the BeeHappy
 beehive monitoring database and finish with **one dataframe fit to train a model on** —
 one row per hive per hour, every cleaning decision written down and checked.
 
-The data is real: 2.36 million readings from seven LoRaWAN devices on three beehives
-at Bildungscampus Heilbronn, collected over 14 months. So are its problems. Nothing
-here has been tidied up or seeded with artificial mistakes.
+The data is real: LoRaWAN devices on three beehives at Bildungscampus Heilbronn,
+reporting continuously since 2025. So are its problems. Nothing here has been tidied
+up or seeded with artificial mistakes.
 
 ## Setup
 
 ```bash
 uv sync
+cp .env.example .env    # then paste in the connection string you were given
 uv run jupyter lab workshop/notebooks/workshop.ipynb
 ```
 
-That is the whole setup. No database, no credentials, no network — the data ships
-with the repo as Parquet.
+No data ships with this repo. Exercise 0 is going and getting it, which means you need
+a network connection and a `DATABASE_URL` in `.env`. The database is hosted on Railway;
+your connection string needs `?sslmode=require` on the end, or the password crosses the
+public internet in plaintext. The role you are given is read-only: you cannot damage
+anything.
 
 ## What you are given
 
-| File | Rows | What it is |
-|---|---|---|
-| `workshop/data/beehives.parquet` | 3 | The hives |
-| `workshop/data/sensors.parquet` | 9 | The devices, and which hive each belongs to |
-| `workshop/data/data.parquet` | 2,355,297 | Every reading, one row per measurement |
+Three tables in Postgres:
 
-`workshop/data/MANIFEST.md` records exactly when the snapshot was taken and the
-numbers your answers should reproduce.
+| Table | What it is |
+|---|---|
+| `beehives` | the hives |
+| `sensors` | the devices, and which hive each belongs to |
+| `data` | every reading, one row per measurement |
 
-Note the shape of `data`: it is **long**, one row per *measurement*, not per reading
-event. A single device uplink writes several rows, one for each thing it measured.
-Getting from that to a table with one column per measurement is the first real task.
+You pull the **last three months** of `data` yourself, save it, and work from your
+saved copy. `data` runs to millions of rows over the full history, so the window is
+not a formality.
+
+Note its shape: it is **long**, one row per *measurement*, not per reading event. A
+single device uplink writes several rows, one for each thing it measured. Getting from
+that to a table with one column per measurement is the first real reshaping task.
 
 ## The exercises
 
 | # | | Time |
 |---|---|---|
-| 0 | **Profile** — what is actually in here? | 30 min |
-| 1 | **Deduplicate** — find the real grain of the table | 30 min |
-| 2 | **Reshape and join** — long to wide, then attach the hive and weather context | 60 min |
-| 3 | **Align time and handle gaps** — put everything on one clock | 60 min |
-| 4 | **Validate and document** — prove it, then describe it | 30 min |
+| 0 | **Extract** — pull three months out of Postgres, once | 30 min |
+| 1 | **Profile** — what is actually in here? | 30 min |
+| 2 | **Deduplicate** — find the real grain of the table | 30 min |
+| 3 | **Reshape and join** — long to wide, then attach the hive and weather context | 60 min |
+| 4 | **Align time and handle gaps** — put everything on one clock | 60 min |
+| 5 | **Validate and document** — prove it, then describe it | 30 min |
 
 Work through `workshop/notebooks/workshop.ipynb`. Each exercise says what to produce,
 not how. When you have a candidate feature table:
@@ -67,18 +75,22 @@ That single reflex catches the most expensive mistake in this dataset.
 `workshop/notebooks/solutions.ipynb` is a full worked solution. Do not hand it out;
 it names every defect on sight and there is nothing left to discover afterwards.
 
-To re-cut the snapshot from the live database:
+Students now read the live database rather than a frozen snapshot, so **run the
+solutions notebook the week before you teach**. The largest defect in this data is a
+live bug in the upstream collector; if it is ever fixed, a fresh pull will be cleaner
+and Exercise 2 will fall flat. The solutions notebook flags what to check, including
+whether the current three-month window happens to cross a DST change.
 
-```bash
-uv sync --extra export
-CHATBOTDB_URL='postgresql://grafana_ro:...@host:port/railway' \
-  uv run python workshop/scripts/export_snapshot.py
-```
+A frozen 14-month Parquet snapshot of all three tables is preserved in git history at
+commit `cc8bbd1` (`workshop/data/`), together with the `export_snapshot.py` script that
+cut it and a manifest of its numbers. Restore it if you ever need a workshop that runs
+offline or a known-good copy of the defects.
 
-Use the read-only `grafana_ro` role, never the superuser. Be aware that re-cutting
-may *lose* teaching material: the largest defect in this data is a live bug in the
-upstream collector, and if it is ever fixed a fresh export will be cleaner and several
-exercises will fall flat. The committed snapshot is deliberately frozen.
+Hand out credentials for the read-only `grafana_ro` role, never the `postgres`
+superuser. This is the BeeHappy **production** database, not a copy — a student who
+mistypes a query under a superuser role can drop the live tables, and Exercise 0's
+`SELECT *` habit makes that an easy mistake to make. `grafana_ro` already exists on the
+instance; only its password needs distributing.
 
 ## History
 
