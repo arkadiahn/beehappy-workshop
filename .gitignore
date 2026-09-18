@@ -15,3 +15,4 @@ wheels/
 # Student output: the extract they pull in Exercise 0 and the feature table they
 # build from it. Neither belongs in the repo -- one is data, the other the answer.
 workshop/out/
+.ipynb_checkpoints/
