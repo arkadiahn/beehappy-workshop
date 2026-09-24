@@ -14,7 +14,7 @@ up or seeded with artificial mistakes.
 ```bash
 uv sync
 cp .env.example .env    # then paste in the connection string you were given
-uv run jupyter lab workshop/notebooks/workshop.ipynb
+uv run jupyter notebook workshop/notebooks/workshop.ipynb
 ```
 
 No data ships with this repo. Exercise 0 is going and getting it, which means you need
