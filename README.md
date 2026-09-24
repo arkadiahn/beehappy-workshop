@@ -1,8 +1,9 @@
 # BeeHappy — Data Foundation workshop
 
-A half-day, hands-on workshop. You start with three raw tables in the BeeHappy
-beehive monitoring database and finish with **one dataframe fit to train a model on** —
-one row per hive per hour, every cleaning decision written down and checked.
+A half-day (~4 hours), hands-on workshop. You start with three raw tables in the
+BeeHappy beehive monitoring database and finish with **one dataframe fit to train a
+model on** — one row per hive per hour, every cleaning decision written down and
+checked. A short plot at the end is how you look at what you built.
 
 The data is real: LoRaWAN devices on three beehives at Bildungscampus Heilbronn,
 reporting continuously since 2025. So are its problems. Nothing here has been tidied
@@ -13,7 +14,7 @@ up or seeded with artificial mistakes.
 ```bash
 uv sync
 cp .env.example .env    # then paste in the connection string you were given
-uv run jupyter lab workshop/notebooks/workshop.ipynb
+uv run jupyter notebook workshop/notebooks/workshop.ipynb
 ```
 
 No data ships with this repo. Exercise 0 is going and getting it, which means you need
@@ -47,12 +48,15 @@ that to a table with one column per measurement is the first real reshaping task
 | 0 | **Extract** — pull three months out of Postgres, once | 30 min |
 | 1 | **Profile** — what is actually in here? | 30 min |
 | 2 | **Deduplicate** — find the real grain of the table | 30 min |
-| 3 | **Reshape and join** — long to wide, then attach the hive and weather context | 60 min |
-| 4 | **Align time and handle gaps** — put everything on one clock | 60 min |
+| 3 | **Reshape and join** — attach hive and role, then split hive vs weather (wide reshape is Ex 4) | 60 min |
+| 4 | **Align time and handle gaps** — one clock, long to wide, complete hours, weather | 60 min |
 | 5 | **Validate and document** — prove it, then describe it | 30 min |
+| 6 | **Look at what you built** — plot brood vs outside on a short window | 10 min |
 
-Work through `workshop/notebooks/workshop.ipynb`. Each exercise says what to produce,
-not how. When you have a candidate feature table:
+Work through [`workshop/notebooks/workshop.ipynb`](workshop/notebooks/workshop.ipynb).
+Each exercise has a starter in the code cell — fill the blanks and run it. The
+markdown still says the deliverable and what to watch for. When you have a candidate
+feature table:
 
 ```bash
 uv run python workshop/validate_features.py workshop/out/features_hourly.parquet
