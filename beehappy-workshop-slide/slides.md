@@ -5,7 +5,7 @@ info: |
   ## BeeHappy — Data Foundation
   From three raw tables of beehive sensor data to one model-ready dataframe.
 
-  Intro + pandas 101 for the hands-on workshop.
+  Intro + pandas, taught exercise by exercise.
 colorSchema: light
 class: bh-cover
 highlighter: shiki
@@ -29,7 +29,7 @@ Real beehive sensor data.<br>
 
 <div class="mt-10 flex gap-3 items-center">
   <span class="bh-pill">~4 hours</span>
-  <span class="bh-pill">6 exercises</span>
+  <span class="bh-pill">7 exercises</span>
   <span class="bh-pill">pandas + matplotlib + Jupyter</span>
 </div>
 
@@ -42,8 +42,8 @@ Welcome. Two things to say out loud before we begin:
 
 1. This data is real and nobody has cleaned it. Every problem you hit today is a
    problem that actually exists in a production database right now.
-2. You do not need to know pandas. The second half of this deck is the entire
-   toolkit you will use, function by function.
+2. You do not need to know pandas. We teach each function in the exercise
+   that uses it.
 -->
 
 ---
@@ -223,7 +223,7 @@ three of these for real within the hour.
 
 ---
 
-# The day: six exercises
+# The day: seven exercises
 
 | # | Exercise | What you produce | Time |
 |---|---|---|---|
@@ -233,6 +233,7 @@ three of these for real within the hour.
 | **3** | **Reshape & join** | A hive frame and a weather frame, each with a grain you can state out loud | 60 min |
 | **4** | **Align time & gaps** | One row per hive-hour, with a written gap policy | 60 min |
 | **5** | **Validate & document** | `features_hourly.parquet` + `DATA_DICTIONARY.md` that pass the validator | 30 min |
+| **6** | **Look at what you built** | One chart of brood vs outside on a short window | 10 min |
 
 <div class="mt-5">
 
@@ -368,7 +369,7 @@ class: bh-section
 
 # 3 · pandas 101
 
-Every function you will need today, with its output
+The functions you need, taught when you need them
 
 ---
 
@@ -423,6 +424,19 @@ The bold left-hand column is the <strong>index</strong>, not data. It comes back
 </div>
 
 ---
+layout: center
+class: bh-section
+---
+
+# Exercise 0 · Extract
+
+Pull once. Save. Work from your copy.
+
+<div class="mt-8 bh-small">
+<code>pd.DataFrame</code> · <code>to_parquet</code> · <code>read_parquet</code>
+</div>
+
+---
 
 # Reading and writing files
 
@@ -430,17 +444,22 @@ The bold left-hand column is the <strong>index</strong>, not data. It comes back
 <div>
 
 ```python
-data = pd.read_parquet(RAW / "data.parquet")
-data.to_parquet(OUT / "features.parquet",
-                index=False)
+frames[name] = pd.DataFrame(
+    cur.fetchall(),
+    columns=[c.name for c in cur.description],
+)
+frames[name].to_parquet(
+    RAW / f"{name}.parquet", index=False)
 
-# also available
-pd.read_csv(path)
-pd.read_sql(query, conn)
+data = pd.read_parquet(RAW / "data.parquet")
 ```
 
 <div class="bh-note mt-4">
 <code>index=False</code> on write: your row index is usually just 0,1,2… — do not save it as a column.
+</div>
+
+<div class="bh-small mt-3">
+Hit the database <strong>once</strong>. The parquet copy is so you never have to query again.
 </div>
 
 </div>
@@ -460,6 +479,19 @@ Save <code>ts</code> to CSV and read it back and it is a <strong>string</strong>
 </div>
 
 </div>
+</div>
+
+---
+layout: center
+class: bh-section
+---
+
+# Exercise 1 · Profile
+
+What is actually in these tables?
+
+<div class="mt-8 bh-small">
+<code>head</code> · <code>dtypes</code> · <code>value_counts</code> · <code>isna</code> · <code>describe</code>
 </div>
 
 ---
@@ -504,47 +536,35 @@ value                      float64
 
 ---
 
-# Selecting columns and filtering rows
-
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+# Selecting columns
 
 ```python
 data["value"]                   # one column -> Series
 data[["ts", "value"]]           # several   -> DataFrame
-
-# Boolean filtering: build a mask, then index with it
-mask = data["measurement_unit"] == "tempC1"
-data[mask]
-
-# combine with & (and), | (or), ~ (not)
-# parentheses are REQUIRED around each condition
-data[(data["sensor_id"] == 3) &
-     (data["value"] > 35)]
-
-# membership
-data[data["measurement_unit"].isin(["tempC1","tempC2"])]
 ```
+
+<div class="grid grid-cols-2 gap-6 mt-4">
+<div>
+
+<div class="bh-out-label">data["value"]</div>
+<pre class="bh-out">0    34.9
+1    35.2
+2    34.7
+Name: value, dtype: float64
+</pre>
 
 </div>
 <div>
 
-<div class="bh-out-label">mask (a Series of booleans)</div>
-<pre class="bh-out">0     True
-1    False
-2    False
-3    False
-Name: measurement_unit, dtype: bool
+<div class="bh-out-label">data[["ts", "value"]]</div>
+<pre class="bh-out">                  ts  value
+0  2025-08-01 04:11   34.9
+1  2025-08-01 04:11   35.2
+2  2025-08-01 04:11   34.7
 </pre>
 
-<div class="bh-out-label mt-3">data[mask]</div>
-<pre class="bh-out">   sensor_id measurement_unit  value
-0          3           tempC1   34.9
-5          3           tempC1   34.9
-</pre>
-
-<div class="bh-warn mt-3">
-Python's <code>and</code> / <code>or</code> do <strong>not</strong> work on Series. Use <code>&</code> and <code>|</code>, and wrap each condition in parentheses — <code>&</code> binds tighter than <code>==</code>.
+<div class="bh-note mt-3">
+One pair of brackets returns a <strong>Series</strong>. Two pairs — a list of names — returns a <strong>DataFrame</strong>.
 </div>
 
 </div>
@@ -581,20 +601,17 @@ Name: count, dtype: int64
 data["sensor_id"].nunique()      # 9
 data["sensor_id"].unique()       # array([1, 2, 3, ...])
 
-data["value"].isna().sum()       # 0   <- no NULLs
-data.isna().mean() * 100         # % missing per column
-```
+data["ts"].min(), data["ts"].max()
 
-<div class="bh-out-label mt-3">data.isna().mean().mul(100).round(1)</div>
-<pre class="bh-out">brood_temp_c1     4.2
-brood_temp_c2     4.2
-food_temp         6.1
-outside_temp      0.8
-dtype: float64
-</pre>
+data["value"].isna().sum()       # 0   <- no NULLs
+```
 
 <div class="bh-warn mt-3">
 Zero NULLs does <strong>not</strong> mean nothing is missing. In this dataset, an hour with no reading has no <em>row</em> at all. Exercise 4 exists because of that sentence.
+</div>
+
+<div class="bh-small mt-3">
+Also look at <code>sensors</code> and <code>beehives</code> whole — they are tiny, and they are how you will attach context later.
 </div>
 
 </div>
@@ -640,6 +657,19 @@ That <code>max</code> of 101,940 is air pressure in pascals sharing a column wit
 </div>
 
 </div>
+</div>
+
+---
+layout: center
+class: bh-section
+---
+
+# Exercise 2 · Deduplicate
+
+Name the grain. Then let pandas tell you whether it holds.
+
+<div class="mt-8 bh-small">
+<code>duplicated</code> · <code>drop_duplicates(subset=)</code> · <code>groupby().size()</code> · <code>nunique</code>
 </div>
 
 ---
@@ -697,24 +727,22 @@ conflicts        # 0 -> exact copies, safe to drop
 <div>
 
 ```python
-# how many rows per key?
+KEY = ["sensor_id", "measurement_unit", "ts"]
+
+# how many copies does each key have?
 data.groupby(KEY).size()
+data.groupby(KEY).size().max()     # worst multiplicity
 
-# average value per hive per hour per unit
-(data.groupby(["beehive_id", "hour", "unit"])["value"]
-     .mean())
-
-# several statistics at once
-data.groupby("unit")["value"].agg(
-    ["mean", "max", "count"])
+# the index label of the worst key
+worst = data.groupby(KEY).size().idxmax()
 ```
 
-<div class="bh-out-label mt-3">groupby("unit")["value"].agg([...])</div>
-<pre class="bh-out">                   mean    max   count
-unit
-tempC1            34.71   38.9  184221
-temperature       19.83   34.1  121004
-relativeHumidity  61.40   99.0  121004
+<div class="bh-out-label mt-3">groupby(KEY).size()</div>
+<pre class="bh-out">sensor_id  measurement_unit  ts
+3          tempC1            2025-08-01 04:11    4
+                             2025-08-01 04:31    1
+7          temperature       2025-08-01 04:17    3
+dtype: int64
 </pre>
 
 </div>
@@ -727,8 +755,8 @@ The mental model:
     <span class="arr">→</span><span class="box">rows where key = A</span>
     <span class="box">key = B</span><span class="box">key = C</span></div>
   <div class="bh-flow"><span class="bh-pill">2 · apply</span>
-    <span class="arr">→</span><span class="box">mean() 34.7</span>
-    <span class="box">mean() 21.3</span><span class="box">mean() 61.4</span></div>
+    <span class="arr">→</span><span class="box">size() 4</span>
+    <span class="box">size() 1</span><span class="box">size() 3</span></div>
   <div class="bh-flow"><span class="bh-pill">3 · combine</span>
     <span class="arr">→</span><span class="box">one row per group, key as the index</span></div>
 </div>
@@ -738,7 +766,68 @@ The group keys become the <strong>index</strong> of the result. Several keys giv
 </div>
 
 <div class="bh-small mt-2">
-Pass <code>observed=True</code> when grouping categoricals to avoid materialising unused combinations.
+Same pattern, different verb: Exercise 4 will <code>groupby(...).mean()</code> instead of <code>.size()</code>.
+</div>
+
+</div>
+</div>
+
+---
+layout: center
+class: bh-section
+---
+
+# Exercise 3 · Reshape and join
+
+Attach hive and role. Split hive vs weather. The table stays **long**.
+
+<div class="mt-8 bh-small">
+<code>.map()</code> · <code>.assign()</code> · boolean filter · <code>merge(on=, how=)</code>
+</div>
+
+<!--
+The wide reshape — unstack — is Exercise 4. Say that out loud so nobody
+starts pivoting here.
+-->
+
+---
+
+# Mapping roles with `.map` and `.assign`
+
+<div class="grid grid-cols-2 gap-6 mt-3">
+<div>
+
+```python
+ROLE = {
+    "LoRaWAN Dragino-S31-LB": "food_chamber",
+    "LoRaWAN Dragino-D23-LB": "brood_chamber",
+    "LoRaWAN SenseCAP-S2120": "weather",
+}
+sensors = sensors.assign(
+    role=sensors["sensor_type"].map(ROLE)
+)
+```
+
+<div class="bh-note mt-3">
+<code>.assign()</code> returns a <strong>new</strong> frame — it never mutates the original. Direct assignment (<code>sensors["role"] = ...</code>) also works.
+</div>
+
+</div>
+<div>
+
+<div class="bh-out-label">sensors after .map()</div>
+<pre class="bh-out">   sensor_id  beehive_id      sensor_type           role
+0          3           1  Dragino-D23-LB  brood_chamber
+1          4           1  Dragino-S31-LB   food_chamber
+2          7           1  SenseCAP-S2120        weather
+</pre>
+
+<div class="bh-note mt-3">
+A key missing from the dict becomes <code>NaN</code> — so <code>sensors["role"].isna().sum()</code> is a free check that your mapping covered everything.
+</div>
+
+<div class="bh-small mt-3">
+Look at the weather rows in <code>sensors</code> <strong>before</strong> you join. How many rows? How many distinct devices?
 </div>
 
 </div>
@@ -746,45 +835,47 @@ Pass <code>observed=True</code> when grouping categoricals to avoid materialisin
 
 ---
 
-# Long → wide: `unstack` (and `pivot`)
+# Filtering rows
+
+<div class="grid grid-cols-2 gap-6 mt-3">
+<div>
 
 ```python
-hive_h = (data.groupby(["beehive_id", "hour", "measurement_unit"])["value"]
-              .mean()                          # Series with a 3-level MultiIndex
-              .unstack("measurement_unit"))    # move that level up into columns
+# Boolean filtering: build a mask, then index with it
+mask = sensors["role"] == "weather"
+sensors[mask]
+
+# split hive readings vs weather readings
+hive_rows = data[data["role"] != "weather"]
+weather_rows = data[data["role"] == "weather"]
+
+# combine with & (and), | (or), ~ (not)
+# parentheses are REQUIRED around each condition
+data[(data["sensor_id"] == 3) &
+     (data["value"] > 35)]
 ```
 
-<div class="grid grid-cols-2 gap-6 mt-4">
-<div>
-
-<div class="bh-out-label">after groupby().mean() — long</div>
-<pre class="bh-out">beehive_id  hour        measurement_unit
-1           2025-08-01  tempC1           34.9
-                        tempC2           35.2
-                        tempC3           34.7
-                        temperature      21.3
-Name: value, dtype: float64
-</pre>
-
 </div>
 <div>
 
-<div class="bh-out-label">after .unstack() — wide</div>
-<pre class="bh-out">measurement_unit    tempC1  tempC2  tempC3  temperature
-beehive_id hour
-1          2025-08-01  34.9    35.2    34.7         21.3
-           2025-08-02  35.0    35.1    34.8         21.5
+<div class="bh-out-label">mask (a Series of booleans)</div>
+<pre class="bh-out">0    False
+1    False
+2     True
+Name: role, dtype: bool
 </pre>
 
-</div>
+<div class="bh-out-label mt-3">sensors[mask]</div>
+<pre class="bh-out">   sensor_id  beehive_id           role
+2          7           1        weather
+5          8           2        weather
+8          9           3        weather
+</pre>
+
+<div class="bh-warn mt-3">
+Python's <code>and</code> / <code>or</code> do <strong>not</strong> work on Series. Use <code>&</code> and <code>|</code>, and wrap each condition in parentheses — <code>&</code> binds tighter than <code>==</code>.
 </div>
 
-<div class="grid grid-cols-2 gap-6 mt-4">
-<div class="bh-note">
-<code>unstack</code> takes one index level and spreads it across columns. <code>stack</code> is the inverse. <code>df.pivot_table(index=…, columns=…, values=…, aggfunc="mean")</code> does the same job in one call.
-</div>
-<div class="bh-note">
-<code>.add_prefix("outside_")</code> renames every column at once — handy right after unstacking the weather frame.
 </div>
 </div>
 
@@ -863,7 +954,7 @@ print(len(df))            # after — did that number move? should it have?
 ```
 
 <div class="mt-6 bh-small">
-That single reflex catches the most expensive mistake in this dataset.
+That single reflex catches the most expensive mistake in this dataset. After the split you still have two <strong>long</strong> frames — going wide is Exercise 4.
 </div>
 
 <!--
@@ -871,110 +962,141 @@ Say this twice. Once now, once when the first person's row count triples in Exer
 -->
 
 ---
+layout: center
+class: bh-section
 ---
 
-# Creating and renaming columns
+# Exercise 4 · Align time and handle gaps
 
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+One clock. Long to wide. Every hive-hour, even the silent ones.
 
-```python
-# direct assignment
-data["hour"] = data["ts"].dt.floor("h")
-
-# .assign() — same thing, returns a new frame
-# (chains nicely, never mutates the original)
-data = data.assign(hour=data["ts"].dt.floor("h"))
-
-# .map() — translate values through a dict
-ROLE = {
-    "LoRaWAN Dragino-S31-LB": "food_chamber",
-    "LoRaWAN Dragino-D23-LB": "brood_chamber",
-    "LoRaWAN SenseCAP-S2120": "weather",
-}
-sensors = sensors.assign(
-    role=sensors["sensor_type"].map(ROLE)
-)
-```
-
-</div>
-<div>
-
-```python
-features = features.rename(columns={
-    "tempC1": "brood_temp_c1",
-    "temperature": "food_temp",
-    "relativeHumidity": "food_humidity",
-})
-```
-
-<div class="bh-out-label mt-3">sensors after .map()</div>
-<pre class="bh-out">   sensor_id  beehive_id      sensor_type           role
-0          3           1  Dragino-D23-LB  brood_chamber
-1          4           1  Dragino-S31-LB   food_chamber
-2          7           1  SenseCAP-S2120        weather
-</pre>
-
-<div class="bh-note mt-3">
-A key missing from the dict becomes <code>NaN</code> — so <code>sensors["role"].isna().sum()</code> is a free check that your mapping covered everything.
-</div>
-
-</div>
+<div class="mt-8 bh-small">
+<code>.dt.floor("h")</code> · <code>groupby().mean()</code> · <code>unstack</code> · <code>reindex</code> · <code>interpolate</code>
 </div>
 
 ---
 
-# Working with time: the `.dt` accessor
-
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+# Floor timestamps to the hour
 
 `.dt` unlocks datetime methods on a whole column at once.
 
+<div class="grid grid-cols-2 gap-6 mt-3">
+<div>
+
 ```python
-ts = data["ts"]
-
-ts.dt.floor("h")      # 04:11:02 -> 04:00:00
-ts.dt.date            # 2025-08-01
-ts.dt.hour            # 4
-ts.dt.month           # 8
-ts.dt.dayofweek       # 0 = Monday
-ts.dt.strftime("%Y-%m")
-
-ts.min(), ts.max()    # the period you actually have
-ts.diff()             # gap to previous row (Timedelta)
-ts.diff().dt.total_seconds() / 3600   # ...in hours
+hive_rows = hive_rows.assign(
+    hour=hive_rows["ts"].dt.floor("h")
+)
+hive_rows[["ts", "hour"]].head()
 ```
 
-<div class="bh-small mt-2">
-If <code>.dt</code> raises <em>"Can only use .dt accessor with datetimelike values"</em>, your column is a string. <code>pd.to_datetime(col)</code> fixes it.
-</div>
+<div class="bh-out-label mt-3">ts vs hour</div>
+<pre class="bh-out">                 ts                hour
+2025-08-01 04:11:02 2025-08-01 04:00:00
+2025-08-01 04:11:02 2025-08-01 04:00:00
+2025-08-01 04:31:18 2025-08-01 04:00:00
+</pre>
 
 </div>
 <div>
 
-### Time zones
-
 ```python
-# ts is *naive* — no zone attached — but holds UTC
-local = (features["hour"]
-         .dt.tz_localize("UTC")       # declare: UTC
-         .dt.tz_convert("Europe/Berlin"))   # shift it
+ts = hive_rows["ts"]
 
-features["hour_local"] = local.dt.hour
-features["month"]      = local.dt.month
-features["dayofweek"]  = local.dt.dayofweek
+ts.dt.floor("h")      # 04:11:02 -> 04:00:00
+ts.min(), ts.max()    # the period you actually have
+ts.diff()             # gap to previous row (Timedelta)
 ```
 
-<div class="bh-warn mt-3">
-<code>tz_localize</code> <strong>attaches</strong> a zone without moving the clock.
-<code>tz_convert</code> <strong>moves</strong> the clock. Getting these the wrong way round shifts every local-time feature by two hours and nothing will complain.
+<div class="bh-small mt-3">
+If <code>.dt</code> raises <em>"Can only use .dt accessor with datetimelike values"</em>, your column is a string. <code>pd.to_datetime(col)</code> fixes it — or you saved CSV in Exercise 0.
 </div>
 
 <div class="bh-note mt-3">
-Germany changes its clocks. The offset is +01:00 or +02:00 depending on the date — never hardcode it, let the zone database do it.
+Repeat the same <code>.assign(hour=...)</code> on <code>weather_rows</code>. Weather's grain will be <code>(hour,)</code>, not <code>(beehive_id, hour)</code>.
 </div>
 
+</div>
+</div>
+
+---
+
+# `groupby` + `mean` — still long
+
+```python
+hive_h = (hive_rows
+    .groupby(["beehive_id", "hour", "measurement_unit"])["value"]
+    .mean())     # Series with a 3-level MultiIndex
+hive_h.head()
+```
+
+<div class="grid grid-cols-2 gap-6 mt-4">
+<div>
+
+<div class="bh-out-label">still long — one row per hive-hour-measurement</div>
+<pre class="bh-out">beehive_id  hour                 measurement_unit
+1           2025-08-01 04:00:00  tempC1           34.9
+                                 tempC2           35.2
+                                 tempC3           34.7
+                                 temperature      21.3
+Name: value, dtype: float64
+</pre>
+
+</div>
+<div>
+
+If a device reported twice in the same hour, `mean()` collapses them. Look at the **index** — three levels, still one measurement per row.
+
+<div class="bh-note mt-3">
+Same three verbs for weather, grain <code>(hour, measurement_unit)</code> — no <code>beehive_id</code>.
+</div>
+
+<div class="bh-small mt-3">
+Pass <code>observed=True</code> when grouping categoricals to avoid materialising unused combinations.
+</div>
+
+</div>
+</div>
+
+---
+
+# Long → wide: `unstack` (and `pivot`)
+
+```python
+hive_h = hive_h.unstack("measurement_unit")    # move that level up into columns
+```
+
+<div class="grid grid-cols-2 gap-6 mt-4">
+<div>
+
+<div class="bh-out-label">after groupby().mean() — long</div>
+<pre class="bh-out">beehive_id  hour        measurement_unit
+1           2025-08-01  tempC1           34.9
+                        tempC2           35.2
+                        tempC3           34.7
+                        temperature      21.3
+Name: value, dtype: float64
+</pre>
+
+</div>
+<div>
+
+<div class="bh-out-label">after .unstack() — wide</div>
+<pre class="bh-out">measurement_unit    tempC1  tempC2  tempC3  temperature
+beehive_id hour
+1          2025-08-01  34.9    35.2    34.7         21.3
+           2025-08-02  35.0    35.1    34.8         21.5
+</pre>
+
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-6 mt-4">
+<div class="bh-note">
+<code>unstack</code> takes one index level and spreads it across columns. <code>stack</code> is the inverse. <code>df.pivot_table(index=…, columns=…, values=…, aggfunc="mean")</code> does the same job in one call.
+</div>
+<div class="bh-note">
+<code>.add_prefix("outside_")</code> renames every column at once — handy right after unstacking the weather frame.
 </div>
 </div>
 
@@ -983,9 +1105,11 @@ Germany changes its clocks. The offset is +01:00 or +02:00 depending on the date
 # Building a complete index: `date_range` + `reindex`
 
 ```python
-hours = pd.date_range("2025-06-18", "2025-09-17", freq="h")      # every hour, no gaps
-grid  = pd.MultiIndex.from_product([[1, 2, 3], hours],
-                                   names=["beehive_id", "hour"])  # every hive × every hour
+hours = pd.date_range(data["ts"].min().floor("h"),
+                      data["ts"].max().floor("h"), freq="h")
+grid  = pd.MultiIndex.from_product(
+    [beehives["beehive_id"], hours],
+    names=["beehive_id", "hour"])
 
 features = hive_h.reindex(grid)     # rows not present become all-NaN
 ```
@@ -1017,7 +1141,7 @@ features = hive_h.reindex(grid)     # rows not present become all-NaN
 </div>
 
 <div class="bh-note mt-4">
-This is the whole idea of Exercise 4. <code>reindex</code> aligns your data to an index <em>you</em> define — and every row you expected but do not have turns into a <code>NaN</code> you can count.
+Build the grid from the extract window, not from what one device happened to cover. <code>reindex</code> turns every expected-but-absent row into a <code>NaN</code> you can count.
 </div>
 
 ---
@@ -1095,7 +1219,7 @@ features.join(weather_h, on="hour")
 ```
 
 <div class="bh-note mt-3">
-<code>join</code> is <code>merge</code>'s index-aware cousin: it lines the right frame's <em>index</em> up against a column or index level on the left. Perfect for attaching one weather table to every hive.
+<code>join</code> is <code>merge</code>'s index-aware cousin: it lines the right frame's <em>index</em> up against a column or index level on the left. Perfect for attaching one weather table to every hive. Print <code>len</code> before and after.
 </div>
 
 </div>
@@ -1116,6 +1240,105 @@ The blank cells under <code>1</code> are not missing — pandas just does not re
 
 <div class="bh-warn mt-3">
 Most alignment bugs in pandas are index bugs. When two frames refuse to line up, print <code>df.index</code> on both.
+</div>
+
+</div>
+</div>
+
+---
+layout: center
+class: bh-section
+---
+
+# Exercise 5 · Validate and document
+
+Prove the grain. Name every column. Write every decision down.
+
+<div class="mt-8 bh-small">
+<code>tz_localize</code> / <code>tz_convert</code> · <code>rename</code> · <code>assert</code> · <code>to_parquet</code>
+</div>
+
+---
+
+# Time zones: localize, then convert
+
+<div class="grid grid-cols-2 gap-6 mt-3">
+<div>
+
+`ts` is *naive* — no zone attached — but holds UTC. The hive is in Germany.
+
+```python
+features = features.reset_index()
+
+local = (features["hour"]
+         .dt.tz_localize("UTC")
+         .dt.tz_convert("Europe/Berlin"))
+
+# did this window cross a clock change?
+local.dt.strftime("%z").unique()
+
+features["hour_local"] = local.dt.hour
+features["month"]      = local.dt.month
+features["dayofweek"]  = local.dt.dayofweek
+```
+
+</div>
+<div>
+
+<div class="bh-warn mt-2">
+<code>tz_localize</code> <strong>attaches</strong> a zone without moving the clock.
+<code>tz_convert</code> <strong>moves</strong> the clock. Getting these the wrong way round shifts every local-time feature by two hours and nothing will complain.
+</div>
+
+<div class="bh-note mt-4">
+Germany changes its clocks. The offset is +01:00 or +02:00 depending on the date — never hardcode it, let the zone database do it.
+</div>
+
+<div class="bh-small mt-4">
+<code>.dt.hour</code> / <code>.dt.month</code> / <code>.dt.dayofweek</code> (Monday = 0) extract calendar fields after the conversion, not before.
+</div>
+
+</div>
+</div>
+
+---
+
+# Rename to the target schema
+
+<div class="grid grid-cols-2 gap-6 mt-3">
+<div>
+
+`hive_name` lives on `beehives`, not on the readings.
+
+```python
+features = features.merge(
+    beehives[["beehive_id", "name"]],
+    on="beehive_id", how="left",
+)
+
+features = features.rename(columns={
+    "name": "hive_name",
+    "tempC1": "brood_temp_c1",
+    "tempC2": "brood_temp_c2",
+    "tempC3": "brood_temp_c3",
+    "temperature": "food_temp",
+    "relativeHumidity": "food_humidity",
+    "outside_temperature": "outside_temp",
+    "outside_relativeHumidity": "outside_humidity",
+})
+```
+
+</div>
+<div>
+
+The validator enforces **exactly** these names. Weather columns after `add_prefix("outside_")` still have the raw `measurement_unit` suffixes — map those too (`outside_windSpeed` → `outside_wind_speed`, and so on).
+
+<div class="bh-note mt-4">
+Print <code>len(features)</code> before and after the <code>beehives</code> merge. Three hive names, three ids — this one should not change the row count.
+</div>
+
+<div class="bh-small mt-3">
+The full mapping is in the notebook starter. Match it; do not invent nearby names.
 </div>
 
 </div>
@@ -1179,6 +1402,97 @@ set(a["id"]) - set(b["id"])      # what failed to match
 
 ---
 
+# Document, save, validate
+
+Write `DATA_DICTIONARY.md` **as you go**, not at the end. Every column, its unit, and **every decision**:
+
+- the window you extracted
+- what you dropped, and why
+- what you filled, and the gap rule
+- what you left empty, and why
+
+```python
+features.to_parquet(OUT / "features_hourly.parquet", index=False)
+```
+
+```bash
+uv run python workshop/validate_features.py workshop/out/features_hourly.parquet
+```
+
+<div class="bh-note mt-4">
+Green is not the goal. A table that passes but whose gap policy you cannot defend is worse than one that fails honestly.
+</div>
+
+---
+layout: center
+class: bh-section
+---
+
+# Exercise 6 · Look at what you built
+
+A line chart is how you check the table with your eyes.
+
+<div class="mt-8 bh-small">
+<code>df.plot</code> · <code>ax.axhline</code> · <code>pd.Timedelta</code>
+</div>
+
+---
+
+# Plot brood vs outside
+
+Three months of hourly points is a scribble — zoom to a few days.
+
+```python
+import matplotlib.pyplot as plt
+
+OPTIMAL_C = 35  # brood-nest target, not a data series
+DAYS = 7        # try 3; comment out the window line for the full extract
+
+one = features[features["hive_name"] == "Beehive No.1"]
+window = one[one["hour"] >= one["hour"].max() - pd.Timedelta(days=DAYS)]
+
+ax = window.plot(x="hour", y=["brood_temp_c1", "outside_temp"],
+                 figsize=(10, 4))
+ax.axhline(OPTIMAL_C, linestyle="--", label=f"optimal {OPTIMAL_C}°C")
+ax.set_ylabel("°C")
+ax.legend()
+```
+
+<div class="bh-note mt-3">
+<code>DataFrame.plot</code> is matplotlib underneath. You do not need to import pyplot to draw, but you do need the axes object to add the 35 °C line.
+</div>
+
+---
+
+# How to read the chart
+
+<div class="grid grid-cols-2 gap-6 mt-4">
+<div>
+
+**What to look for**
+
+- Brood should hug 35 °C more tightly than outside does.
+- Breaks in the line are leftover gaps, not a plotting bug — pandas skips `NaN`.
+- Try `DAYS = 7` then `3`. Comment out the window line to see the whole extract; it should look like a scribble.
+
+</div>
+<div>
+
+**If it looks wrong**
+
+<div class="bh-warn">
+If the two traces sit on top of each other, you plotted the same column twice or joined weather onto brood by mistake.
+</div>
+
+<div class="bh-note mt-4">
+If there is no dashed line, <code>axhline</code> was never called. The 35 °C line is the point of the chart — without it you cannot tell whether brood is doing its job.
+</div>
+
+</div>
+</div>
+
+---
+
 # Four gotchas that will bite today
 
 <div class="grid grid-cols-2 gap-4 mt-3 text-sm">
@@ -1224,23 +1538,6 @@ Introduce a single NaN into an `int64` column and the whole column becomes `floa
 
 ---
 
-# The toolkit, mapped to the day
-
-| Exercise | The functions you will reach for |
-|---|---|
-| **0 · Extract** | `pd.DataFrame(...)`, `to_parquet`, `read_parquet`, `len`, `.min()` / `.max()` |
-| **1 · Profile** | `.head()`, `.shape`, `.dtypes`, `value_counts`, `nunique`, `isna().sum()` |
-| **2 · Deduplicate** | `duplicated`, `drop_duplicates(subset=)`, `groupby().size()`, `nunique`, `idxmax` |
-| **3 · Reshape & join** | `.map()`, `.assign()`, boolean filtering, `merge(on=, how=)`, `groupby().mean()`, `unstack`, `add_prefix` |
-| **4 · Align & gaps** | `.dt.floor("h")`, `date_range`, `MultiIndex.from_product`, `reindex`, `join`, `diff`, `interpolate`, `isna().mean()` |
-| **5 · Validate** | `tz_localize` / `tz_convert`, `.dt.hour/month/dayofweek`, `rename`, `assert`, `to_parquet` |
-
-<div class="bh-note mt-5">
-Nothing else. If you find yourself writing a <code>for</code> loop over rows, there is a pandas function for it — ask.
-</div>
-
----
-
 # Getting unstuck
 
 <div class="grid grid-cols-2 gap-6 mt-4">
@@ -1253,6 +1550,7 @@ Nothing else. If you find yourself writing a <code>for</code> loop over rows, th
 3. `df.head()` — look at actual rows, not just shapes
 4. `df.index` — are the two frames indexed the same way?
 5. Re-run from a clean kernel
+6. Does the plot window actually show anything? Try `DAYS = 7` then `3`.
 
 <div class="bh-note mt-4">
 <kbd>Shift</kbd>+<kbd>Tab</kbd> inside any function call shows the docstring. <code>df.merge?</code> in a cell does the same.
