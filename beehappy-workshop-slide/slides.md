@@ -24,13 +24,13 @@ duration: 45min
 
 # <span class="bh-brand">BeeHappy</span> — Data Foundation
 
-Three tables of real beehive sensor data go in.<br>
-**One dataframe fit to train a model on** comes out.
+Real beehive sensor data.<br>
+**Analyze what material works best** for the bees.
 
 <div class="mt-10 flex gap-3 items-center">
   <span class="bh-pill">~4 hours</span>
   <span class="bh-pill">6 exercises</span>
-  <span class="bh-pill">pandas + Jupyter</span>
+  <span class="bh-pill">pandas + matplotlib + Jupyter</span>
 </div>
 
 <div @click="$slidev.nav.next" class="mt-12 py-1 cursor-pointer text-amber-700">
@@ -82,11 +82,11 @@ graph TD
   C[Weather station<br/>SenseCAP S2120] --> G
   G --> D[ChatBotCollector<br/>service]
   D --> E[(PostgreSQL)]
-  E --> F[You, today]
 ```
 
 <div class="bh-note mt-3">
-The collector is a real service with real bugs. Remember that — it matters in Exercise 2.
+The collector is a service with bugs. <br>
+Remember that. It matters in Exercise 2.
 </div>
 
 </div>
@@ -101,16 +101,11 @@ on three *different schedules* is what makes Exercise 4 make sense.
 
 # Why are we collecting this data?
 
-<div class="grid grid-cols-3 gap-4 mt-6">
+<div class="grid grid-cols-2 gap-4 mt-6">
 
 <div class="bh-card">
 <div class="bh-card-h">🌡️ Colony health</div>
 Brood temperature is tightly regulated by the bees at ~35 °C. When it drifts, something is wrong — and it drifts <em>before</em> the beekeeper can see it.
-</div>
-
-<div class="bh-card">
-<div class="bh-card-h">🐝 Swarm prediction</div>
-Swarming costs a beekeeper half a colony. The run-up shows up in temperature and activity patterns days in advance.
 </div>
 
 <div class="bh-card">
@@ -121,12 +116,8 @@ Most colony losses happen in winter. Humidity and temperature history tell you w
 </div>
 
 <div class="mt-8">
-
-All three are the same shape of question:
-
-> Given what the sensors said over the last *N* hours, **what is about to happen in this hive?**
-
-That is a machine-learning question. And every ML model needs the same thing underneath it: **a rectangular table, one row per thing you want to predict about.**
+We used 3 different materials for each hive: thermofolie, cotton and plastic. <br>
+We would like to figure out which material is the best one for the bee colony.
 
 </div>
 
@@ -136,13 +127,10 @@ We are building the input a model needs.
 -->
 
 ---
-layout: two-cols
 layoutClass: gap-10
 ---
 
-# The gap
-
-What the database gives you:
+# The data
 
 <div class="bh-out-label mt-2">data (long, one row per measurement)</div>
 <pre class="bh-out">reading_id  sensor_id  measurement_unit  ts                value
@@ -151,23 +139,11 @@ What the database gives you:
    9182346          3  tempC3            2025-08-01 04:11   34.7
    9182347          7  temperature       2025-08-01 04:17   21.3
    9182348          7  relativeHumidity  2025-08-01 04:17   63.0
-   9182349          3  tempC1            2025-08-01 04:11   34.9  ← ?
-</pre>
-
-::right::
-
-What a model needs:
-
-<div class="bh-out-label mt-2">features_hourly (wide, one row per hive-hour)</div>
-<pre class="bh-out">hive  hour              brood_temp_c1  food_temp  outside_temp
-   1  2025-08-01 04:00           34.9       21.3          17.4
-   1  2025-08-01 05:00           35.0       21.5          17.9
-   1  2025-08-01 06:00           35.1       21.9          19.1
-   2  2025-08-01 04:00           34.6       20.8          17.4
+   9182349          3  tempC1            2025-08-01 04:11   34.9
 </pre>
 
 <div class="bh-note mt-6">
-Closing that gap <strong>is</strong> the workshop. Everything in between is pandas.
+Everything in between is pandas.
 </div>
 
 ---
@@ -207,53 +183,6 @@ You pull **the last three months** of `data` — filtered in SQL, not in pandas 
 
 </div>
 
-<div class="bh-note mt-4">
-9 sensor rows for 7 physical devices. Worth staring at for a second longer than feels necessary.
-</div>
-
----
-
-# Long vs. wide — the first real reshape
-
-<div class="grid grid-cols-2 gap-6 mt-2">
-<div>
-
-**Long format** — one row per *measurement*
-
-<pre class="bh-out">ts                  unit              value
-2025-08-01 04:11    tempC1             34.9
-2025-08-01 04:11    tempC2             35.2
-2025-08-01 04:11    tempC3             34.7
-</pre>
-
-<div class="bh-small mt-2">
-One device uplink writes <em>several</em> rows — one per thing it measured.
-Great for storage: add a new sensor type, no schema change.
-</div>
-
-</div>
-<div>
-
-**Wide format** — one row per *event*, one column per measurement
-
-<pre class="bh-out">ts                tempC1  tempC2  tempC3
-2025-08-01 04:11    34.9    35.2    34.7
-</pre>
-
-<div class="bh-small mt-2">
-Terrible for storage, but it is the <em>only</em> shape statistics and ML libraries accept.
-Every <code>fit(X, y)</code> in Python wants X rectangular.
-</div>
-
-</div>
-</div>
-
-<div class="mt-6">
-
-In pandas the move between them is `pivot` / `unstack` (long → wide) and `melt` (wide → long). You will use `unstack` in Exercise 3.
-
-</div>
-
 ---
 layout: center
 class: text-center
@@ -263,7 +192,7 @@ class: text-center
 
 <div class="mt-8 text-left max-w-3xl mx-auto">
 
-> A model cannot tell the difference between a signal and a mistake in your table.
+> An AI/ML model cannot tell the difference between a signal and a mistake in your table.
 > It will happily learn the mistake.
 
 </div>
@@ -351,35 +280,6 @@ Green is not the goal. A table that passes but whose gap policy you cannot defen
 
 ---
 layout: center
-class: text-center
----
-
-<div class="bh-kicker">The one habit that matters</div>
-
-# Check your row count<br>after every join
-
-<div class="mt-8 text-lg">
-
-If it changes and you **cannot say exactly why** — stop and find out.
-
-</div>
-
-```python
-print(len(df))            # before
-df = df.merge(other, on="sensor_id", how="left")
-print(len(df))            # after — did that number move? should it have?
-```
-
-<div class="mt-6 bh-small">
-That single reflex catches the most expensive mistake in this dataset.
-</div>
-
-<!--
-Say this twice. Once now, once when the first person's row count triples in Exercise 3.
--->
-
----
-layout: center
 class: bh-section
 ---
 
@@ -412,15 +312,10 @@ The last expression in a cell is displayed automatically. <code>df.head()</code>
 | <kbd>Esc</kbd> then <kbd>A</kbd> / <kbd>B</kbd> | new cell above / below |
 | <kbd>Esc</kbd> then <kbd>D</kbd><kbd>D</kbd> | delete cell |
 | <kbd>Esc</kbd> then <kbd>M</kbd> / <kbd>Y</kbd> | to Markdown / to Code |
-| <kbd>Tab</kbd> | autocomplete |
 | <kbd>Shift</kbd>+<kbd>Tab</kbd> | show the docstring |
 
 </div>
 </div>
-
-```bash
-uv run jupyter lab workshop/notebooks/workshop.ipynb
-```
 
 ---
 
@@ -947,6 +842,36 @@ It raises if the right side is not unique on the key.
 </div>
 
 ---
+layout: center
+class: text-center
+---
+
+<div class="bh-kicker">The one habit that matters</div>
+
+# Check your row count<br>after every join
+
+<div class="mt-8 text-lg">
+
+If it changes and you **cannot say exactly why** — stop and find out.
+
+</div>
+
+```python
+print(len(df))            # before
+df = df.merge(other, on="sensor_id", how="left")
+print(len(df))            # after — did that number move? should it have?
+```
+
+<div class="mt-6 bh-small">
+That single reflex catches the most expensive mistake in this dataset.
+</div>
+
+<!--
+Say this twice. Once now, once when the first person's row count triples in Exercise 3.
+-->
+
+---
+---
 
 # Creating and renaming columns
 
@@ -1362,7 +1287,7 @@ class: text-center bh-cover
 ```bash
 uv sync
 cp .env.example .env      # paste in your connection string
-uv run jupyter lab workshop/notebooks/workshop.ipynb
+uv run jupyter notebook workshop/notebooks/workshop.ipynb
 ```
 
 <div class="mt-8 max-w-2xl mx-auto text-left">

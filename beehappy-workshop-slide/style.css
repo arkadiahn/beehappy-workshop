@@ -1,0 +1,220 @@
+/* BeeHappy workshop theme — honey / amber on cream,
+   matched to https://beehappy.openspace.hn (Tailwind amber + #fefdf8) */
+
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+:root {
+  --bh-cream:      #fefdf8;
+  --bh-cream-2:    #fffbeb; /* amber-50  */
+  --bh-honey-100:  #fef3c7;
+  --bh-honey-200:  #fde68a;
+  --bh-honey-300:  #fcd34d;
+  --bh-honey-400:  #fbbf24;
+  --bh-honey-500:  #f59e0b;
+  --bh-honey-600:  #d97706;
+  --bh-honey-700:  #b45309;
+  --bh-honey-800:  #92400e;
+  --bh-ink:        #171717;
+  --bh-ink-2:      #374151;
+  --bh-ink-3:      #6b7280;
+
+  --slidev-theme-primary: #d97706;
+}
+
+html:not(.dark) {
+  --slidev-code-background: #fffbeb;
+  --slidev-code-foreground: #3f3f46;
+}
+
+.slidev-layout {
+  background-color: var(--bh-cream);
+  color: var(--bh-ink);
+}
+
+.slidev-layout h1 {
+  color: var(--bh-honey-800);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.slidev-layout h2 { color: var(--bh-honey-700); font-weight: 650; }
+.slidev-layout h3 { color: var(--bh-ink-2); }
+
+.slidev-layout a { color: var(--bh-honey-600); }
+
+/* Honey rule under every slide title */
+.slidev-layout:not(.cover):not(.bh-section) h1::after {
+  content: '';
+  display: block;
+  width: 3.2rem;
+  height: 4px;
+  margin-top: 0.45rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--bh-honey-500), var(--bh-honey-200));
+}
+
+/* Code */
+.slidev-layout pre, .slidev-layout code {
+  font-variant-ligatures: none;
+}
+.slidev-layout .slidev-code {
+  border: 1px solid var(--bh-honey-200);
+  border-radius: 0.5rem;
+  background: var(--bh-cream-2) !important;
+}
+.slidev-layout :not(pre) > code {
+  background: var(--bh-honey-100);
+  color: var(--bh-honey-800);
+  padding: 0.1em 0.35em;
+  border-radius: 0.3em;
+  font-size: 0.9em;
+}
+
+/* Tables */
+.slidev-layout table { font-size: 0.85em; }
+.slidev-layout th {
+  background: var(--bh-honey-100);
+  color: var(--bh-honey-800);
+  text-align: left;
+}
+.slidev-layout td, .slidev-layout th {
+  border-color: var(--bh-honey-200) !important;
+}
+
+.slidev-layout blockquote {
+  border-left: 4px solid var(--bh-honey-500);
+  background: var(--bh-cream-2);
+  padding: 0.6em 1em;
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+
+/* ---- helper classes used in the deck ---- */
+
+.bh-brand {
+  font-family: 'Pacifico', cursive;
+  color: var(--bh-honey-600);
+}
+
+.bh-cover {
+  background:
+    radial-gradient(1200px 500px at 80% -10%, var(--bh-honey-200), transparent 60%),
+    linear-gradient(160deg, var(--bh-cream) 0%, var(--bh-cream-2) 100%) !important;
+}
+
+.bh-section {
+  background:
+    linear-gradient(135deg, var(--bh-honey-800) 0%, var(--bh-honey-500) 100%) !important;
+  color: #fff !important;
+}
+.bh-section h1, .bh-section h2 { color: #fff !important; }
+.bh-section p { color: #fff !important; opacity: 0.92; }
+
+.bh-card {
+  background: #fff;
+  border: 1px solid var(--bh-honey-200);
+  border-radius: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  box-shadow: 0 1px 2px rgba(146, 64, 14, 0.06);
+}
+.bh-card-h {
+  color: var(--bh-honey-700);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.bh-note {
+  background: var(--bh-honey-100);
+  border-left: 4px solid var(--bh-honey-500);
+  border-radius: 0 0.4rem 0.4rem 0;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.92em;
+}
+.bh-warn {
+  background: #fee2e2;
+  border-left: 4px solid #dc2626;
+  border-radius: 0 0.4rem 0.4rem 0;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.92em;
+}
+.bh-out {
+  font-family: var(--slidev-code-font-family, monospace);
+  margin: 0;
+  font-size: 0.64rem;
+  line-height: 1.35;
+  white-space: pre;
+  background: #ffffff;
+  border: 1px dashed var(--bh-honey-300);
+  border-radius: 0.45rem;
+  padding: 0.5rem 0.7rem;
+  color: var(--bh-ink-2);
+  overflow-x: auto;
+}
+.bh-out-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bh-honey-600);
+  margin-bottom: 0.15rem;
+}
+
+.bh-pill {
+  display: inline-block;
+  background: var(--bh-honey-100);
+  color: var(--bh-honey-800);
+  border: 1px solid var(--bh-honey-300);
+  border-radius: 999px;
+  padding: 0.05em 0.6em;
+  font-size: 0.78em;
+  font-weight: 600;
+}
+
+.bh-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--bh-honey-600);
+}
+
+.bh-small { font-size: 0.82em; color: var(--bh-ink-3); }
+
+/* Code sized to fit two-column slides */
+.slidev-layout .slidev-code {
+  font-size: 0.72em;
+  line-height: 1.5;
+}
+
+/* Inline code inside headings: no pill, just tint */
+.slidev-layout h1 :not(pre) > code,
+.slidev-layout h2 :not(pre) > code,
+.slidev-layout h3 :not(pre) > code {
+  background: transparent;
+  padding: 0;
+  color: var(--bh-honey-600);
+}
+
+/* Flow strip used in place of a wide diagram */
+.bh-flow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+}
+.bh-flow .box {
+  background: var(--bh-honey-100);
+  border: 1px solid var(--bh-honey-300);
+  color: var(--bh-honey-800);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+.bh-flow .arr { color: var(--bh-honey-500); font-weight: 700; }
+
+/* Code and output blocks always read left-aligned, even on centered slides */
+.slidev-layout .slidev-code,
+.slidev-layout pre,
+.slidev-layout .bh-out { text-align: left; }
+
+/* Centre the honey rule on centred slides */
+.slidev-layout.text-center h1::after { margin-left: auto; margin-right: auto; }
