@@ -20,7 +20,6 @@ import pandas as pd
 # holds numbers, not which exact float width you ended up with.
 REQUIRED_COLUMNS: dict[str, str] = {
     "beehive_id": "num",
-    "hive_name": "str",
     "hour": "datetime",
     # brood chamber, three probes on one device
     "brood_temp_c1": "num",
