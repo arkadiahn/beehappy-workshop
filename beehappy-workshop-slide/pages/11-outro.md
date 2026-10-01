@@ -14,13 +14,13 @@ Most aggregations silently *skip* NaN: `mean()` of `[1, NaN, 3]` is `2.0`, not `
 </div>
 
 <div class="bh-card">
-<div class="bh-card-h">2 · Copy vs. view</div>
+<div class="bh-card-h">2 · Chained assignment does nothing</div>
 
 ```python
-sub = df[df["x"] > 0]
-sub["y"] = 1     # SettingWithCopyWarning
+df[df["x"] > 0]["y"] = 1        # df unchanged
+df.loc[df["x"] > 0, "y"] = 1    # ✓
 ```
-Take an explicit copy — `df[mask].copy()` — or build new frames with `.assign()` instead of mutating slices.
+Since pandas 3, a filtered frame always behaves like a copy. Write through `.loc[rows, col]`, or build new frames with `.assign()`.
 </div>
 
 <div class="bh-card">

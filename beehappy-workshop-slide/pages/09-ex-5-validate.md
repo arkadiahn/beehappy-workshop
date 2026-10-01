@@ -21,14 +21,12 @@ Prove the grain. Name every column. Write every decision down.
 `ts` is *naive* — no zone attached — but holds UTC. The hive is in Germany.
 
 ```python
-features = features.reset_index()
-
 local = (features["hour"]
          .dt.tz_localize("UTC")
          .dt.tz_convert("Europe/Berlin"))
 
 # did this window cross a clock change?
-local.dt.strftime("%z").unique()
+local.dt.strftime("%z").unique()   # ['+0200']
 
 features["hour_local"] = local.dt.hour
 features["month"]      = local.dt.month
@@ -44,7 +42,7 @@ features["dayofweek"]  = local.dt.dayofweek
 </div>
 
 <div class="bh-note mt-4">
-Germany changes its clocks. The offset is +01:00 or +02:00 depending on the date — never hardcode it, let the zone database do it.
+Germany changes its clocks. The offset is +01:00 or +02:00 depending on the date, so never hardcode it. Let the zone database do it. A June–September window prints only <code>+0200</code>. A window that crosses late October prints both.
 </div>
 
 <div class="bh-small mt-4">
@@ -61,16 +59,8 @@ Germany changes its clocks. The offset is +01:00 or +02:00 depending on the date
 <div class="grid grid-cols-2 gap-6 mt-3">
 <div>
 
-`hive_name` lives on `beehives`, not on the readings.
-
 ```python
-features = features.merge(
-    beehives[["beehive_id", "name"]],
-    on="beehive_id", how="left",
-)
-
 features = features.rename(columns={
-    "name": "hive_name",
     "tempC1": "brood_temp_c1",
     "tempC2": "brood_temp_c2",
     "tempC3": "brood_temp_c3",
@@ -78,20 +68,30 @@ features = features.rename(columns={
     "relativeHumidity": "food_humidity",
     "outside_temperature": "outside_temp",
     "outside_relativeHumidity": "outside_humidity",
+    "outside_windSpeed": "outside_wind_speed",
+    "outside_windDirection": "outside_wind_dir",
+    "outside_uvIndex": "outside_uv_index",
+    "outside_pressure": "outside_pressure_pa",
+    "outside_lightIntensity": "outside_light",
+    "outside_rainGauge": "outside_rain",
 })
 ```
 
 </div>
 <div>
 
-The validator enforces **exactly** these names. Weather columns after `add_prefix("outside_")` still have the raw `measurement_unit` suffixes — map those too (`outside_windSpeed` → `outside_wind_speed`, and so on).
+The validator enforces **exactly** these names. A dict maps each old name to its new one. Columns you do not mention keep their names.
 
 <div class="bh-note mt-4">
-Print <code>len(features)</code> before and after the <code>beehives</code> merge. Three hive names, three ids — this one should not change the row count.
+The weather columns still carry the raw <code>measurement_unit</code> names after <code>add_prefix("outside_")</code>, so they need renaming too: <code>outside_windSpeed</code> → <code>outside_wind_speed</code>, and so on.
+</div>
+
+<div class="bh-warn mt-3">
+A typo in a key is <strong>silently ignored</strong>. <code>rename</code> does not complain about a column that is not there. Check <code>features.columns</code> afterwards, or let the validator tell you.
 </div>
 
 <div class="bh-small mt-3">
-The full mapping is in the notebook starter. Match it; do not invent nearby names.
+The full mapping is in the notebook starter. Match it, and do not invent nearby names.
 </div>
 
 </div>
@@ -117,13 +117,13 @@ assert len(features) == (
     * features["hour"].nunique()
 )
 
-# ranges that physics allows
-assert features["food_humidity"].between(0, 100).all()
+# physical range. dropna(): NaN is never "between"
+assert (features["food_humidity"].dropna()
+        .between(0, 100).all())
 
-# nothing lost in a join
-assert len(after) == len(before), (
+# nothing gained or lost in a join
+assert len(after) == len(before), \
     f"join changed rows: {len(before)} -> {len(after)}"
-)
 ```
 
 </div>
@@ -134,7 +134,7 @@ An assertion that has never failed still earns its place: it is documentation th
 </div>
 
 <div class="bh-out-label mt-4">when one fails</div>
-<pre class="bh-out">AssertionError: join changed rows: 939523 -> 1142006
+<pre class="bh-out">AssertionError: join changed rows: 392344 -> 1177032
 </pre>
 
 <div class="mt-4">

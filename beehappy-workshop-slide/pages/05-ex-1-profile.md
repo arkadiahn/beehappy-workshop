@@ -16,36 +16,37 @@ What is actually in these tables?
 # First look: shape, head, dtypes
 
 ```python
-data.shape          # (1_203_441, 5)   -> (rows, columns)
-len(data)           # 1203441          -> rows only
-data.columns        # Index(['reading_id', 'sensor_id', 'measurement_unit', 'ts', 'value'], ...)
+data.shape          # (511937, 6)      -> (rows, columns)
+len(data)           # 511937           -> rows only
+data.columns        # Index(['reading_id', 'sensor_id', 'beehive_id', 'measurement_unit', 'ts', 'value'])
 data.head(3)        # first 3 rows.  .tail(3) for the last
 ```
 
-<div class="grid grid-cols-2 gap-6 mt-4">
-<div>
+<div class="grid grid-cols-5 gap-5 mt-4">
+<div class="col-span-3">
 
 <div class="bh-out-label">data.head(3)</div>
-<pre class="bh-out">   reading_id  sensor_id measurement_unit               ts  value
-0     9182344          3           tempC1 2025-08-01 04:11   34.9
-1     9182345          3           tempC2 2025-08-01 04:11   35.2
-2     9182346          3           tempC3 2025-08-01 04:11   34.7
+<pre class="bh-out" style="font-size:0.56rem">   reading_id  sensor_id  beehive_id measurement_unit                      ts  value
+0     2072737          8           1           tempC3 2026-06-28 12:22:52.471   37.3
+1     2072738          8           1           tempC1 2026-06-28 12:22:52.471   35.5
+2     2072739          8           1           tempC2 2026-06-28 12:22:52.471   35.7
 </pre>
 
 </div>
-<div>
+<div class="col-span-2">
 
 <div class="bh-out-label">data.dtypes</div>
 <pre class="bh-out">reading_id                   int64
 sensor_id                    int64
-measurement_unit            object
-ts                  datetime64[ns]
+beehive_id                   int64
+measurement_unit               str
+ts                  datetime64[us]
 value                      float64
 </pre>
 
 <div class="bh-small mt-2">
-<code>object</code> means "Python objects" — usually strings.
-<code>datetime64[ns]</code> is what you want <code>ts</code> to be. Check this <em>first</em>, every time.
+<code>str</code> is text (older pandas versions print <code>object</code>).
+<code>datetime64[…]</code> is what you want <code>ts</code> to be. Check this <em>first</em>, every time.
 </div>
 
 </div>
@@ -64,9 +65,9 @@ data[["ts", "value"]]           # several   -> DataFrame
 <div>
 
 <div class="bh-out-label">data["value"]</div>
-<pre class="bh-out">0    34.9
-1    35.2
-2    34.7
+<pre class="bh-out">0    37.3
+1    35.5
+2    35.7
 Name: value, dtype: float64
 </pre>
 
@@ -74,10 +75,10 @@ Name: value, dtype: float64
 <div>
 
 <div class="bh-out-label">data[["ts", "value"]]</div>
-<pre class="bh-out">                  ts  value
-0  2025-08-01 04:11   34.9
-1  2025-08-01 04:11   35.2
-2  2025-08-01 04:11   34.7
+<pre class="bh-out">                       ts  value
+0 2026-06-28 12:22:52.471   37.3
+1 2026-06-28 12:22:52.471   35.5
+2 2026-06-28 12:22:52.471   35.7
 </pre>
 
 <div class="bh-note mt-3">
@@ -100,12 +101,14 @@ data["measurement_unit"].value_counts()
 
 <div class="bh-out-label">output</div>
 <pre class="bh-out">measurement_unit
-tempC1              184_221
-tempC2              184_221
-tempC3              184_221
-temperature         121_004
-relativeHumidity    121_004
-windSpeed            98_330
+temperature         78760
+relativeHumidity    78760
+lightIntensity      39381
+rainGauge           39381
+...
+tempC3              39377
+tempC1              39377
+tempC2              39377
 Name: count, dtype: int64
 </pre>
 
@@ -116,9 +119,10 @@ Name: count, dtype: int64
 
 ```python
 data["sensor_id"].nunique()      # 9
-data["sensor_id"].unique()       # array([1, 2, 3, ...])
+data["sensor_id"].unique()       # array([8, 6, 1, ...])
 
 data["ts"].min(), data["ts"].max()
+data["ts"].max() - data["ts"].min()  # 91 days 23:51:50
 
 data["value"].isna().sum()       # 0   <- no NULLs
 ```
@@ -128,7 +132,7 @@ Zero NULLs does <strong>not</strong> mean nothing is missing. In this dataset, a
 </div>
 
 <div class="bh-small mt-3">
-Also look at <code>sensors</code> and <code>beehives</code> whole — they are tiny, and they are how you will attach context later.
+Also look at <code>sensors</code> and <code>beehives</code> whole. They are tiny, and they are how you attach context later. <code>sensors.loc[0, "measurement_units"]</code> lists what one device type reports.
 </div>
 
 </div>
@@ -147,15 +151,15 @@ data.groupby("measurement_unit")["value"].describe()   # per group
 <div>
 
 <div class="bh-out-label">value.describe()</div>
-<pre class="bh-out">count    1.203441e+06
-mean     3.021473e+01
-std      2.884201e+01
-min     -9.700000e+00
-25%      1.840000e+01
-50%      2.760000e+01
-75%      3.489000e+01
-max      1.019400e+05
-dtype: float64
+<pre class="bh-out">count    511937.000000
+mean       9359.079351
+std       28067.571822
+min           0.000000
+25%           4.400000
+50%          29.400000
+75%          60.300000
+max      126795.000000
+Name: value, dtype: float64
 </pre>
 
 </div>
@@ -170,7 +174,7 @@ s.idxmax()          # the *index label* of the max
 ```
 
 <div class="bh-note mt-3">
-That <code>max</code> of 101,940 is air pressure in pascals sharing a column with temperatures in °C. Long format mixes units in one column — <code>describe()</code> on the whole column is meaningless until you group.
+That <code>max</code> of 126,795 is light intensity in lux, sitting in the same column as temperatures in °C and air pressure in pascals (~100,000). Long format mixes units in one column, so <code>describe()</code> on the whole column means nothing until you group.
 </div>
 
 </div>

@@ -96,8 +96,7 @@ Fine for <code>beehives</code> and <code>sensors</code> — three and nine rows.
 
 ```sql
 SELECT * FROM data
-WHERE ts >= (now() AT TIME ZONE 'UTC')
-            - INTERVAL '3 months'
+WHERE ts >= now() - INTERVAL '3 months'
 ```
 
 <span class="bh-small">
@@ -108,8 +107,8 @@ WHERE ts >= (now() AT TIME ZONE 'UTC')
 
 </span>
 
-<div class="bh-warn mt-3">
-<code>ts</code> is <code>timestamp without time zone</code> holding UTC — so compare against UTC, not the server's local clock.
+<div class="bh-small mt-3">
+<code>now()</code> is the <strong>server</strong> clock, while <code>ts</code> holds UTC with no time zone attached. For a three-month window, an hour or two either way does not matter. For an exact filter, use <code>(now() AT TIME ZONE 'UTC')</code>.
 </div>
 
 </div>
@@ -148,19 +147,28 @@ Save <code>ts</code> to CSV and read it back and it is a <strong>string</strong>
 <div>
 
 ```python
-frames[name] = pd.DataFrame(
-    cur.fetchall(),
-    columns=[c.name for c in cur.description],
-)
-frames[name].to_parquet(
-    RAW / f"{name}.parquet", index=False)
+queries = {
+    "beehives": "SELECT * FROM beehives",
+    "sensors":  "SELECT * FROM sensors",
+    "data":     "SELECT * FROM data WHERE ts >= ...",
+}
+frames = {}
+# inside the `with ... as cur:` block
+for name, sql in queries.items():
+    cur.execute(sql)
+    frames[name] = pd.DataFrame(
+        cur.fetchall(),
+        columns=[c.name for c in cur.description],
+    )
+    frames[name].to_parquet(RAW / f"{name}.parquet")
 
+# read back from disk: the rest works offline
 data = pd.read_parquet(RAW / "data.parquet")
 ```
 
-<div class="bh-note mt-4">
-<code>index=False</code> on write: your row index is usually just 0,1,2… — do not save it as a column.
-</div>
+<pre class="bh-out mt-2">beehives (3, 6)   sensors (9, 8)   data (511937, 6)
+period: 2026-06-28 12:22:52 -> 2026-09-28 12:14:42
+</pre>
 
 </div>
 

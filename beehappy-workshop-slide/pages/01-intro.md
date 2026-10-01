@@ -80,85 +80,133 @@ on three *different schedules* is what makes Exercise 4 make sense.
 
 # Why are we collecting this data?
 
-<div class="grid grid-cols-2 gap-4 mt-6">
+<div class="grid grid-cols-2 gap-6 mt-4">
+<div>
 
-<div class="bh-card">
+<div class="bh-kicker">Today · questions the data can answer</div>
+
+We wrapped the three hives in three different materials: **thermofolie**, **cotton** and **plastic**.
+
+<div class="bh-card mt-3">
+<div class="bh-card-h">🐝 Which material is best for the colony?</div>
+
+<span class="bh-small">
+
+- Which hive keeps its brood closest to **35 °C**?
+- Does brood stay steadier than the outside temperature?
+- Do the three brood probes in one hive agree?
+- Does one hive go silent more often than the others?
+
+</span>
+</div>
+
+</div>
+<div>
+
+<div class="bh-kicker">Later · machine learning</div>
+
+<div class="bh-card mt-3">
 <div class="bh-card-h">🌡️ Colony health</div>
-Brood temperature is tightly regulated by the bees at ~35 °C. When it drifts, something is wrong — and it drifts <em>before</em> the beekeeper can see it.
+<span class="bh-small">The bees hold brood at ~35 °C. When it drifts, something is wrong, and it drifts <em>before</em> the beekeeper can see it. A model could raise the alarm.</span>
 </div>
 
-<div class="bh-card">
+<div class="bh-card mt-3">
 <div class="bh-card-h">❄️ Overwintering</div>
-Most colony losses happen in winter. Humidity and temperature history tell you which hives are at risk while you can still act.
+<span class="bh-small">Most colonies are lost in winter. Temperature and humidity history could flag the hives at risk while there is still time to act.</span>
 </div>
 
 </div>
+</div>
 
-<div class="mt-8">
-We used 3 different materials for each hive: thermofolie, cotton and plastic. <br>
-We would like to figure out which material is the best one for the bee colony.
-
+<div class="bh-note mt-5">
+The question we answer today and the model we might train later need the same input: <strong>one clean row per hive per hour</strong>. That table is what we build today.
 </div>
 
 <!--
-Pull the group toward the framing: we are not doing data cleaning as an end in itself.
-We are building the input a model needs.
+Pull the group toward the framing: we are not cleaning data for its own sake.
+
+There is no ML problem to solve yet, so today ends with a plot that answers the
+materials question. The same table is the input a model would need later, so none
+of the work is wasted.
 -->
 
 ---
-layoutClass: gap-10
+
+# The data · two small lookup tables
+
+<div class="bh-out-label mt-2">beehives · 3 rows · the hives</div>
+<pre class="bh-out">   beehive_id          name                                           notes
+0           1  Beehive No.1  Larry is standing alone, he needs some friends
+1           2  Beehive No.2            TamTam is the middle Sandwhich child
+2           3  Beehive No.3          BonBon is the smallest yet most active
+</pre>
+<div class="bh-small mt-1">+ <code>location</code>, <code>installation_date</code>, <code>last_inspection_date</code></div>
+
+<div class="bh-out-label mt-4">sensors · 9 rows · the devices, and which hive each belongs to</div>
+<pre class="bh-out">   sensor_id  beehive_id            sensor_name             sensor_type             measurement_units
+0          1           1  LoRa-2CF7F1C0613005BC  LoRaWAN SenseCAP-S2120  lightIntensity,rainGauge,...
+1          2           2  LoRa-2CF7F1C0613005BC  LoRaWAN SenseCAP-S2120  lightIntensity,rainGauge,...
+2          3           3  LoRa-2CF7F1C0613005BC  LoRaWAN SenseCAP-S2120  lightIntensity,rainGauge,...
+3          4           1  LoRa-A840411F645AE815  LoRaWAN Dragino-S31-LB  temperature,relativeHumidity
+4          5           3  LoRa-A8404138A188669C  LoRaWAN Dragino-S31-LB  temperature,relativeHumidity
+5          6           2  LoRa-A84041CC625AE81E  LoRaWAN Dragino-S31-LB  temperature,relativeHumidity
+6          7           3  LoRa-A8404160C85A7A7B  LoRaWAN Dragino-D23-LB          tempC3,tempC1,tempC2
+7          8           1  LoRa-A84041892E5A7A68  LoRaWAN Dragino-D23-LB          tempC3,tempC1,tempC2
+8          9           2  LoRa-A840419521864618  LoRaWAN Dragino-D23-LB          tempC3,tempC1,tempC2
+</pre>
+<div class="bh-small mt-1">+ <code>installation_date</code>, <code>last_seen</code>, <code>is_active</code> · one weather station, one food sensor and one brood sensor per hive</div>
+
+<!--
+Real rows from the database. Read the sensor_type column out loud: SenseCAP is the
+weather station, S31 is the food chamber, D23 is the brood chamber.
+
+Do not point out that sensors 1–3 share a sensor_name. That is Exercise 3's discovery.
+-->
+
 ---
 
-# The data
+# The data · one big table of readings
 
-<div class="bh-out-label mt-2">data (long, one row per measurement)</div>
-<pre class="bh-out">reading_id  sensor_id  measurement_unit  ts                value
-   9182344          3  tempC1            2025-08-01 04:11   34.9
-   9182345          3  tempC2            2025-08-01 04:11   35.2
-   9182346          3  tempC3            2025-08-01 04:11   34.7
-   9182347          7  temperature       2025-08-01 04:17   21.3
-   9182348          7  relativeHumidity  2025-08-01 04:17   63.0
-   9182349          3  tempC1            2025-08-01 04:11   34.9
+<div class="bh-out-label mt-2">data · ~500k rows for three months · millions in total</div>
+<pre class="bh-out">   reading_id  sensor_id  beehive_id  measurement_unit                      ts  value
+0     2072737          8           1            tempC3 2026-06-28 12:22:52.471   37.3
+1     2072738          8           1            tempC1 2026-06-28 12:22:52.471   35.5
+2     2072739          8           1            tempC2 2026-06-28 12:22:52.471   35.7
+3     2072776          8           1            tempC3 2026-06-28 12:22:52.471   37.3
+4     2072777          8           1            tempC1 2026-06-28 12:22:52.471   35.5
+5     2072778          8           1            tempC2 2026-06-28 12:22:52.471   35.7
+6     2072732          6           2       temperature 2026-06-28 12:23:27.991   35.6
+7     2072733          6           2  relativeHumidity 2026-06-28 12:23:27.991   65.8
 </pre>
 
-<div class="bh-note mt-6">
-Everything in between is pandas.
+<div class="bh-small mt-2">
+<strong>Long</strong> format: one row per <em>measurement</em>. A single uplink from brood sensor 8 writes three rows: <code>tempC1</code>, <code>tempC2</code>, <code>tempC3</code>.
 </div>
 
----
+<div class="grid grid-cols-2 gap-6 mt-4">
+<div>
 
-# The data
-
-<div class="grid grid-cols-3 gap-4 mt-6">
-
-<div class="bh-card">
-<div class="bh-card-h">beehives</div>
-<span class="bh-small">~3 rows</span>
-
-The hives themselves — id and name.
-</div>
-
-<div class="bh-card">
-<div class="bh-card-h">sensors</div>
-<span class="bh-small">~9 rows</span>
-
-The devices: `sensor_id`, `sensor_type`, `sensor_name`, and which `beehive_id` each belongs to.
-</div>
-
-<div class="bh-card">
-<div class="bh-card-h">data</div>
-<span class="bh-small">millions of rows</span>
-
-Every reading: `reading_id`, `sensor_id`, `measurement_unit`, `ts`, `value`.
+<div class="bh-out-label">how the tables connect</div>
+<div class="space-y-2 mt-1">
+  <div class="bh-flow"><span class="box">data</span><span class="arr">— sensor_id →</span><span class="box">sensors</span><span class="bh-small">which device, what type</span></div>
+  <div class="bh-flow"><span class="box">data</span><span class="arr">— beehive_id →</span><span class="box">beehives</span><span class="bh-small">which hive</span></div>
+  <div class="bh-flow"><span class="box">sensors</span><span class="arr">— beehive_id →</span><span class="box">beehives</span></div>
 </div>
 
 </div>
+<div>
 
-<div class="mt-6">
-
-You pull **the last three months** of `data` — filtered in SQL, not in pandas afterwards. The full history is far too big to be worth moving.
+<div class="bh-note">
+You pull <strong>the last three months</strong> of <code>data</code>, filtered in SQL rather than in pandas. The full history is too big to be worth moving.
+</div>
 
 </div>
+</div>
+
+<!--
+Rows 0–2 and 3–5 are worth a second look later. Do not explain them now: Exercise 2
+is where they find out why.
+-->
 
 ---
 
@@ -171,7 +219,7 @@ One row per hive per hour. `validate_features.py` enforces exactly these names.
 
 | Column | Meaning |
 |---|---|
-| `beehive_id`, `hive_name` | which hive |
+| `beehive_id`| which hive |
 | `hour` | the hour, **UTC** |
 | `brood_temp_c1/c2/c3` | brood chamber, three probes |
 | `food_temp`, `food_humidity` | food chamber |

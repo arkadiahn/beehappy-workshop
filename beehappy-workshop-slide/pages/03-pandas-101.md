@@ -36,7 +36,7 @@ The functions you need
 </div>
 
 <div class="bh-note mt-5">
-Three months of readings is a few hundred MB — it fits in memory, so the simplest tool is also the right one.
+Three months of readings is about half a million rows — it fits in memory, so the simplest tool is also the right one.
 </div>
 
 <!--
@@ -91,18 +91,18 @@ compute the average in the database.
 import pandas as pd
 
 df = pd.DataFrame({
-    "sensor_id": [3, 3, 7],
+    "sensor_id": [8, 8, 6],
     "unit": ["tempC1", "tempC2", "temperature"],
-    "value": [34.9, 35.2, 21.3],
+    "value": [35.5, 35.7, 35.6],
 })
 df
 ```
 
 <div class="bh-out-label">output</div>
 <pre class="bh-out">   sensor_id         unit  value
-0          3       tempC1   34.9
-1          3       tempC2   35.2
-2          7  temperature   21.3
+0          8       tempC1   35.5
+1          8       tempC2   35.7
+2          6  temperature   35.6
 </pre>
 </div>
 
@@ -114,9 +114,9 @@ type(df["value"])     # pandas.core.series.Series
 ```
 
 <div class="bh-out-label">output</div>
-<pre class="bh-out">0    34.9
-1    35.2
-2    21.3
+<pre class="bh-out">0    35.5
+1    35.7
+2    35.6
 Name: value, dtype: float64
 </pre>
 

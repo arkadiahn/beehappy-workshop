@@ -22,18 +22,23 @@ Name the grain. Then let pandas tell you whether it holds.
 KEY = ["sensor_id", "measurement_unit", "ts"]
 
 # How many rows share a key?
-data.duplicated(subset=KEY).sum()       # 263_918
+data.duplicated(subset=KEY).sum()       # 119593
 
-# Drop them, keeping the first of each
-clean = data.drop_duplicates(subset=KEY)
-
-before, after = len(data), len(clean)
-print(f"{before:,} -> {after:,} "
-      f"({100*(1-after/before):.1f}% removed)")
+before = len(data)
+distinct = len(data.drop_duplicates(subset=KEY))
+pct = 100 * (1 - distinct / before)
+print(f"{before:,} rows -> {distinct:,} distinct keys "
+      f"({pct:.1f}% redundant)")
 ```
 
-<pre class="bh-out mt-2">1,203,441 -> 939,523 (21.9% removed)
+<pre class="bh-out mt-2">511,937 rows -> 392,344 distinct keys (23.4% redundant)
 </pre>
+
+```python
+# keep one row per key, renumber the index 0, 1, 2, ...
+data = data.drop_duplicates(subset=KEY)
+data = data.reset_index(drop=True)
+```
 
 </div>
 <div>
@@ -45,10 +50,14 @@ print(f"{before:,} -> {after:,} "
 Before you drop, ask whether the copies **agree**:
 
 ```python
-conflicts = (data.groupby(KEY)["value"]
-                 .nunique() > 1).sum()
-conflicts        # 0 -> exact copies, safe to drop
-                 # >0 -> you must arbitrate
+# do copies of one key disagree on value?
+(data.groupby(KEY)["value"].nunique() > 1).sum()
+# 0 -> exact copies, safe to drop
+# >0 -> you must arbitrate
+
+# different reading_ids for one key?
+data.groupby(KEY)["reading_id"].nunique().max()
+# 70 -> real INSERTs, not your query
 ```
 
 <div class="bh-small mt-3">
@@ -78,9 +87,11 @@ worst = data.groupby(KEY).size().idxmax()
 
 <div class="bh-out-label mt-3">groupby(KEY).size()</div>
 <pre class="bh-out">sensor_id  measurement_unit  ts
-3          tempC1            2025-08-01 04:11    4
-                             2025-08-01 04:31    1
-7          temperature       2025-08-01 04:17    3
+1          lightIntensity    2026-06-28 12:24:36.630     1
+                             2026-06-28 14:16:39.427     2
+...
+6          relativeHumidity  2026-08-13 03:58:33.810    70
+...
 dtype: int64
 </pre>
 
@@ -94,8 +105,8 @@ The mental model:
     <span class="arr">→</span><span class="box">rows where key = A</span>
     <span class="box">key = B</span><span class="box">key = C</span></div>
   <div class="bh-flow"><span class="bh-pill">2 · apply</span>
-    <span class="arr">→</span><span class="box">size() 4</span>
-    <span class="box">size() 1</span><span class="box">size() 3</span></div>
+    <span class="arr">→</span><span class="box">size() 1</span>
+    <span class="box">size() 2</span><span class="box">size() 70</span></div>
   <div class="bh-flow"><span class="bh-pill">3 · combine</span>
     <span class="arr">→</span><span class="box">one row per group, key as the index</span></div>
 </div>
@@ -110,3 +121,12 @@ Same pattern, different verb: Exercise 4 will <code>groupby(...).mean()</code> i
 
 </div>
 </div>
+
+<!--
+The duplicates come from a live bug in the ChatBotCollector service. They run at
+21–27% per month and the rate is uneven, so they skew any mean weighted by row count.
+Dropping them is not just cosmetic.
+
+If the redundancy prints near zero, the bug was fixed upstream. Say so and teach it as
+"here is how you would have caught it".
+-->
