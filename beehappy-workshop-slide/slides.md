@@ -29,6 +29,10 @@ src: ./pages/03-pandas-101.md
 ---
 
 ---
+src: ./pages/03b-before-you-start.md
+---
+
+---
 src: ./pages/04-ex-0-extract.md
 ---
 
@@ -56,6 +60,3 @@ src: ./pages/09-ex-5-validate.md
 src: ./pages/10-ex-6-visualize.md
 ---
 
----
-src: ./pages/11-outro.md
----

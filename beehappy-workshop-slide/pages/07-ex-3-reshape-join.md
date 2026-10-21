@@ -114,7 +114,7 @@ Name: role, dtype: bool
 </pre>
 
 <div class="bh-warn mt-3">
-Python's <code>and</code> / <code>or</code> do <strong>not</strong> work on Series. Use <code>&</code> and <code>|</code>, and wrap each condition in parentheses — <code>&</code> binds tighter than <code>==</code>.
+Python's <code>and</code> / <code>or</code> do <strong>not</strong> work on Series. Use <code>&</code> and <code>|</code>, and wrap each condition in parentheses.
 </div>
 
 </div>

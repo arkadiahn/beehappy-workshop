@@ -132,6 +132,41 @@ of the work is wasted.
 
 ---
 
+# Why data cleaning comes first
+
+<div class="mt-8 text-left max-w-3xl mx-auto">
+
+> An AI/ML model cannot tell the difference between a signal and a mistake in your table.<br>
+> It will happily learn the mistake.
+
+</div>
+
+<div class="grid grid-cols-3 gap-4 mt-10 text-left">
+<div class="bh-card">
+<div class="bh-card-h">Duplicates</div>
+<span class="bh-small">Your "average temperature" is silently a weighted average — weighted by how many times the collector happened to insert the same row.</span>
+</div>
+<div class="bh-card">
+<div class="bh-card-h">Bad joins</div>
+<span class="bh-small">Three times the rows, no error message, and every summary statistic you compute afterwards is wrong.</span>
+</div>
+<div class="bh-card">
+<div class="bh-card-h">Silent gaps</div>
+<span class="bh-small">A missing row is not a <code>NaN</code>. It is nothing at all — and nothing is very hard to notice.</span>
+</div>
+</div>
+
+<div class="mt-8 bh-small">
+The usual industry estimate is that 60–80% of any data science project is this step.
+</div>
+
+<!--
+Do not moralise for too long. One sentence per card and move on — they will meet all
+three of these for real within the hour.
+-->
+
+---
+
 # The data · two small lookup tables
 
 <div class="bh-out-label mt-2">beehives · 3 rows · the hives</div>

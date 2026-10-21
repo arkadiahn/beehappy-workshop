@@ -54,10 +54,6 @@ Before you drop, ask whether the copies **agree**:
 (data.groupby(KEY)["value"].nunique() > 1).sum()
 # 0 -> exact copies, safe to drop
 # >0 -> you must arbitrate
-
-# different reading_ids for one key?
-data.groupby(KEY)["reading_id"].nunique().max()
-# 70 -> real INSERTs, not your query
 ```
 
 <div class="bh-small mt-3">
@@ -81,8 +77,6 @@ KEY = ["sensor_id", "measurement_unit", "ts"]
 data.groupby(KEY).size()
 data.groupby(KEY).size().max()     # worst multiplicity
 
-# the index label of the worst key
-worst = data.groupby(KEY).size().idxmax()
 ```
 
 <div class="bh-out-label mt-3">groupby(KEY).size()</div>
@@ -90,9 +84,7 @@ worst = data.groupby(KEY).size().idxmax()
 1          lightIntensity    2026-06-28 12:24:36.630     1
                              2026-06-28 14:16:39.427     2
 ...
-6          relativeHumidity  2026-08-13 03:58:33.810    70
-...
-dtype: int64
+qdtype: int64
 </pre>
 
 </div>
@@ -106,7 +98,7 @@ The mental model:
     <span class="box">key = B</span><span class="box">key = C</span></div>
   <div class="bh-flow"><span class="bh-pill">2 · apply</span>
     <span class="arr">→</span><span class="box">size() 1</span>
-    <span class="box">size() 2</span><span class="box">size() 70</span></div>
+    <span class="box">size() 2</span></div>
   <div class="bh-flow"><span class="bh-pill">3 · combine</span>
     <span class="arr">→</span><span class="box">one row per group, key as the index</span></div>
 </div>
