@@ -5,15 +5,64 @@ class: bh-section
 
 # Exercise 3 · Reshape and join
 
-Attach `role`. Split hive vs weather. The table stays **long**.
+Attach `role`. Split hive from weather. Collapse the weather.
 
 <div class="mt-8 bh-small">
-<code>.map()</code> · <code>.assign()</code> · boolean filter · <code>merge(on=, how=)</code>
+<code>.map()</code> · <code>.assign()</code> · <code>merge(on=, how=)</code> · boolean filter · <code>drop_duplicates</code>
 </div>
 
 <!--
 The wide reshape — unstack — is Exercise 4. Say that out loud so nobody
 starts pivoting here.
+-->
+
+---
+
+# Why not just unstack?
+
+<JupyterCell n="?" label="a shortcut, not in the notebook">
+
+```python
+wide = (distinct_sensor_readings
+        .set_index(["beehive_id", "ts", "measurement_unit"])["value"]
+        .unstack("measurement_unit"))
+wide[["temperature", "relativeHumidity", "windSpeed"]].head(4)
+```
+
+<template #output>
+<pre>measurement_unit                    temperature  relativeHumidity  windSpeed
+beehive_id ts
+1          2026-07-28 10:28:39.165         30.7              68.5        NaN
+           2026-07-28 10:31:23.976         29.0              33.0        0.7
+           2026-07-28 10:34:28.255          NaN               NaN        NaN
+           2026-07-28 10:41:41.145         28.6              34.0        1.0</pre>
+</template>
+</JupyterCell>
+
+<div class="grid grid-cols-3 gap-4 mt-4">
+<div v-click class="bh-card">
+<div class="bh-card-h">Two sensors, one column</div>
+<span class="bh-small">30.7 is the food chamber, 29.0 the weather station. Both are <code>temperature</code>. No error.</span>
+</div>
+<div v-click class="bh-card">
+<div class="bh-card-h">One device per row</div>
+<span class="bh-small">Every device has its own <code>ts</code>: 72,243 rows, mostly <code>NaN</code>.</span>
+</div>
+<div v-click class="bh-card">
+<div class="bh-card-h">Weather three times</div>
+<span class="bh-small">The station is registered to every hive, so each hive gets its own copy.</span>
+</div>
+</div>
+
+<!--
+Run this live or just click through: it runs, and that is the problem.
+
+Row 1 has no windSpeed, so it is the food chamber (Dragino-S31). Row 2 has windSpeed, so
+it is the weather station. Same column name, different devices. Row 3 is the brood
+sensor, which has none of these columns.
+
+The fix is the rest of this exercise: role tells the devices apart, the split keeps
+weather separate, and Exercise 4 floors to the hour and adds the outside_ prefix.
 -->
 
 ---
@@ -67,119 +116,214 @@ Look at the weather rows in <code>sensors</code> <strong>before</strong> you joi
 
 ---
 
-# Filtering rows
+# merge: joining two tables
 
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+<JupyterCell n="19" at="2">
+
+<div class="relative">
+<div v-click.hide="1">
 
 ```python
-# Boolean filtering: build a mask, then index with it
-mask = sensors["role"] == "weather"
-sensors[mask]
+SENSOR_COLUMNS = [...]  # columns to take from sensors
+ON_COLUMNS = [...]      # keys both tables share
+MERGE_TYPE = "left"
 
-# split hive readings vs weather readings
-weather_rows = data[data["role"] == "weather"]
-hive_rows = data[data["role"] != "weather"]
-
-# combine with & (and), | (or), ~ (not)
-# parentheses are REQUIRED around each condition
-data[(data["sensor_id"] == 8) &
-     (data["value"] > 35)]
+before = len(distinct_sensor_readings)
+distinct_sensor_readings = distinct_sensor_readings.merge(
+    sensors[SENSOR_COLUMNS],
+    on=ON_COLUMNS,
+    how=MERGE_TYPE
+)
+print(f"distinct_sensor_readings {before:,} -> {len(distinct_sensor_readings):,} after merge")
 ```
 
-<div class="bh-out-label mt-2">len of each part</div>
-<pre class="bh-out">hive_rows       82,192
-weather_rows   310,152
-weather sensor_ids: [1 2 3]
-</pre>
-
 </div>
-<div>
-
-<div class="bh-out-label">mask (a Series of booleans)</div>
-<pre class="bh-out">0     True
-1     True
-2     True
-3    False
-...
-8    False
-Name: role, dtype: bool
-</pre>
-
-<div class="bh-out-label mt-3">sensors[mask]</div>
-<pre class="bh-out">   sensor_id  beehive_id             sensor_type     role
-0          1           1  LoRaWAN SenseCAP-S2120  weather
-1          2           2  LoRaWAN SenseCAP-S2120  weather
-2          3           3  LoRaWAN SenseCAP-S2120  weather
-</pre>
-
-<div class="bh-warn mt-3">
-Python's <code>and</code> / <code>or</code> do <strong>not</strong> work on Series. Use <code>&</code> and <code>|</code>, and wrap each condition in parentheses.
-</div>
-
-</div>
-</div>
-
----
-
-# `merge` — joining two tables
-
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+<div v-click="1" class="absolute inset-0">
 
 ```python
 SENSOR_COLUMNS = ["sensor_id", "beehive_id", "role"]
 ON_COLUMNS = ["sensor_id", "beehive_id"]
+MERGE_TYPE = "left"
 
-before = len(data)
-data = data.merge(sensors[SENSOR_COLUMNS],
-                  on=ON_COLUMNS, how="left")
-print(f"data {before:,} -> {len(data):,} after merge")
-# data 392,344 -> 392,344 after merge
+before = len(distinct_sensor_readings)
+distinct_sensor_readings = distinct_sensor_readings.merge(
+    sensors[SENSOR_COLUMNS],
+    on=ON_COLUMNS,
+    how=MERGE_TYPE
+)
+print(f"distinct_sensor_readings {before:,} -> {len(distinct_sensor_readings):,} after merge")
 ```
 
-| `how` | Keeps |
-|---|---|
-| `"left"` | every row of the left table |
-| `"inner"` | only rows matching in both |
-| `"outer"` | everything from both |
-| `"right"` | every row of the right table |
-
 </div>
-<div>
-
-<div class="bh-warn">
-<strong>A merge can change your row count even with <code>how="left"</code>.</strong>
-If the right table has <em>two</em> rows for a key, the left row is duplicated. No error. No warning.
 </div>
 
-```python
-# a careless join: on the hive, not the device
-print(len(data))     # 392,344
-data.merge(sensors[["beehive_id", "role"]],
-           on="beehive_id", how="left")
-                     # 1,177,032  ← WHY?
-```
+<template #output>
+<pre>distinct_sensor_readings 396,298 -> 396,298 after merge</pre>
+</template>
+</JupyterCell>
 
-<div class="bh-note mt-3">
-Defensive habit — make pandas check for you:
-
-```python
-data.merge(sensors[SENSOR_COLUMNS], on=ON_COLUMNS,
-           how="left", validate="many_to_one")
-```
-It raises if the right side is not unique on the key.
-</div>
-
-</div>
+<div v-click="3" class="bh-small mt-4">
+<code>how="left"</code> keeps every left row · <code>"inner"</code> only matches · <code>"outer"</code> everything · <code>"right"</code> every right row
 </div>
 
 <!--
+Ask the room for SENSOR_COLUMNS and ON_COLUMNS before the reveal click.
+
+distinct_sensor_readings already has beehive_id. Joining on both keys means a reading
+cannot be attached to a device registered on a different hive.
+
 If both sides have a column with the same name, pandas suffixes them _x and _y
 (change it with suffixes=).
+-->
 
-data already has beehive_id. Joining on both keys means a reading cannot be attached
-to a device registered on a different hive.
+---
+
+# A careless join
+
+<JupyterCell n="20">
+
+```python
+len(distinct_sensor_readings.merge(sensors[["beehive_id", "role"]], on="beehive_id", how="left"))
+```
+
+<template #output>
+<pre>1188894</pre>
+</template>
+</JupyterCell>
+
+<div v-click class="bh-warn mt-4">
+Joined on the hive, not the device: each hive has 3 sensors, so every row is <strong>tripled</strong>. No error, no warning.
+</div>
+
+<div v-click class="bh-note mt-4">
+Let pandas check for you: <code>merge(..., validate="many_to_one")</code> raises if the right side is not unique on the key.
+</div>
+
+---
+
+# Filtering rows: hive vs weather
+
+<JupyterCell n="21" at="1">
+
+```python
+mask = sensors['role'] == 'weather'
+sensors[mask]
+```
+
+<template #output>
+<pre style="font-size:0.52rem">   sensor_id  beehive_id            sensor_name            sensor_type      measurement_units installation_date              last_seen  is_active     role
+0          1           1  LoRa-2CF7F1C0613005BC  LoRaWAN SenseCAP-S...  lightIntensity,rai...        2025-04-14 2025-06-13 13:51:12...       True  weather
+1          2           2  LoRa-2CF7F1C0613005BC  LoRaWAN SenseCAP-S...  lightIntensity,rai...        2025-04-14 2025-06-13 13:51:12...       True  weather
+2          3           3  LoRa-2CF7F1C0613005BC  LoRaWAN SenseCAP-S...  lightIntensity,rai...        2025-04-14 2025-06-13 13:51:12...       True  weather</pre>
+</template>
+</JupyterCell>
+
+<JupyterCell n="22" at="2">
+
+<div class="relative">
+<div v-click.hide="3">
+
+```python
+hive_rows = ...
+weather_rows = ...
+```
+
+</div>
+<div v-click="3" class="absolute inset-0">
+
+```python
+hive_rows = distinct_sensor_readings[distinct_sensor_readings["role"] != "weather"]
+weather_rows = distinct_sensor_readings[distinct_sensor_readings["role"] == "weather"]
+```
+
+</div>
+</div>
+
+</JupyterCell>
+
+<!--
+Mirrors notebook cells 39-40. Ask the room before the reveal click.
+
+Point at sensor_name in the sensors[mask] output: three sensor_ids, one physical
+weather station, registered once per hive. Hold that thought for the next slide.
+
+Python's and / or do not work on Series. Use & and |, and wrap each condition in
+parentheses: df[(df["sensor_id"] == 8) & (df["value"] > 35)]
+-->
+
+---
+
+# One weather station, stored three times
+
+<JupyterCell n="23" at="1">
+
+```python
+weather_rows["sensor_id"].unique()
+```
+
+<template #output>
+<pre>array([1, 2, 3])</pre>
+</template>
+</JupyterCell>
+
+<JupyterCell n="24" at="2">
+
+```python
+weather_rows.sort_values("measurement_unit").head(6)
+```
+
+<template #output>
+<pre>    reading_id  sensor_id  beehive_id measurement_unit                      ts    value     role
+2      2236612          1           1   lightIntensity 2026-07-28 10:31:23.976  96248.0  weather
+10     2236620          2           2   lightIntensity 2026-07-28 10:31:23.976  96248.0  weather
+18     2236628          3           3   lightIntensity 2026-07-28 10:31:23.976  96248.0  weather
+34     2236651          1           1   lightIntensity 2026-07-28 10:41:41.145  97400.0  weather
+42     2236659          2           2   lightIntensity 2026-07-28 10:41:41.145  97400.0  weather
+50     2236667          3           3   lightIntensity 2026-07-28 10:41:41.145  97400.0  weather</pre>
+</template>
+</JupyterCell>
+
+<JupyterCell n="25" at="4">
+
+<div class="relative">
+<div v-click.hide="3">
+
+```python
+# How many weather rows share the same (measurement_unit, ts)?
+weather_rows = weather_rows.drop_duplicates(subset=[...])
+```
+
+</div>
+<div v-click="3" class="absolute inset-0">
+
+```python
+# How many weather rows share the same (measurement_unit, ts)?
+weather_rows = weather_rows.drop_duplicates(subset=["measurement_unit", "ts"])
+```
+
+</div>
+</div>
+
+</JupyterCell>
+
+<JupyterCell n="26" at="5">
+
+```python
+weather_rows = weather_rows.drop(columns=["sensor_id", "beehive_id"])
+```
+
+</JupyterCell>
+
+<!--
+Mirrors notebook cells 41-44.
+
+Sorted by measurement_unit, the copies sit next to each other: same ts, same value,
+sensor_id 1, 2, 3. Ask the room which columns identify one weather reading before
+the reveal click. On the local extract: weather_rows 313,056 -> 104,352 after the
+drop_duplicates.
+
+After the collapse, sensor_id and beehive_id would just say "1" for every row, which
+is a lie: the station belongs to no hive. So drop them.
 -->
 
 ---
@@ -204,7 +348,7 @@ print(len(df))            # after — did that number move? should it have?
 ```
 
 <div class="mt-6 bh-small">
-That single reflex catches the most expensive mistake in this dataset. After the split you still have two <strong>long</strong> frames. Going wide is Exercise 4.
+That single reflex catches the most expensive mistake in this dataset.
 </div>
 
 <!--
@@ -212,7 +356,7 @@ Say this twice. Once now, once when the first person's row count triples in Exer
 
 Instructor only: the weather station is registered three times (sensor_ids 1, 2, 3,
 same sensor_name), so every weather reading is stored three times, once per hive.
-weather_rows.drop_duplicates(subset=["measurement_unit", "ts"]) goes 310,152 -> 103,384.
-The solution keeps weather per hive and merges on (beehive_id, hour) in Exercise 4.
-Collapsing to one station and joining on hour alone is the other valid path. Do not mix the two.
+The solution collapses it to one station: drop_duplicates(subset=["measurement_unit", "ts"])
+(313,056 -> 104,352 on the local extract), then drops sensor_id and beehive_id.
+Exercise 4 builds weather_hourly at the grain of hour and merges it on hour alone.
 -->

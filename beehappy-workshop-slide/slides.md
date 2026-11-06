@@ -29,7 +29,7 @@ src: ./pages/03-pandas-101.md
 ---
 
 ---
-src: ./pages/03b-before-you-start.md
+src: ./pages/03b-setup-env.md
 ---
 
 ---

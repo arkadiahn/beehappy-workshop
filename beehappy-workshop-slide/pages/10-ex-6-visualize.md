@@ -5,7 +5,7 @@ class: bh-section
 
 # Exercise 6 · Look at what you built
 
-A line chart is how you check the table with your eyes, and how you answer the materials question.
+Check the table with your eyes. Answer the materials question.
 
 <div class="mt-8 bh-small">
 <code>plt.plot</code> · <code>plt.subplots</code> · <code>df.plot</code> · <code>ax.axhline</code> · <code>sns.lineplot(hue=)</code> · <code>sns.set_palette</code>
@@ -38,6 +38,7 @@ one = features[
     features["beehive_id"] == HIVE]
 plt.plot(one["hour"], one["brood_temp_c1"])
 plt.xticks(rotation=45)  # tilt the dates
+plt.show()
 ```
 
 <div class="bh-note mt-3">

@@ -6,8 +6,6 @@ class: bh-cover
 
 # <span class="bh-brand">BeeHappy</span> — Data Foundation
 
-Real beehive sensor data.<br>
-**Analyze what material works best** for the bees.
 
 <div class="mt-10 flex gap-3 items-center">
   <span class="bh-pill">~4 hours</span>
@@ -22,8 +20,7 @@ Real beehive sensor data.<br>
 <!--
 Welcome. Two things to say out loud before we begin:
 
-1. This data is real and nobody has cleaned it. Every problem you hit today is a
-   problem that actually exists in a production database right now.
+1. This data is real and nobody has cleaned it. Every problem you hit today is a problem that actually exists in a production database right now.
 2. You do not need to know pandas. We teach each function in the exercise
    that uses it.
 -->
@@ -41,16 +38,45 @@ What the data is, where it comes from, and why cleaning it is the job
 
 # 🐝 What is BeeHappy?
 
+**Three beehives** at Bildungscampus Heilbronn, wired with **LoRaWAN sensors**, reporting continuously since **2025**. Each hive is wrapped in a different material.
+
+<div class="grid grid-cols-3 gap-6 mt-5 max-w-3xl mx-auto">
+  <figure class="m-0">
+    <img src="/images/hives/beehive1.jpg" class="w-full h-60 object-cover rounded-lg shadow-lg" alt="Beehive 1, wrapped in plastic film" />
+    <figcaption class="mt-2 text-sm"><strong>Hive 1</strong> · plastic film</figcaption>
+  </figure>
+  <figure class="m-0">
+    <img src="/images/hives/beehive2.jpg" class="w-full h-60 object-cover rounded-lg shadow-lg" alt="Beehive 2, wrapped in thermal foil" />
+    <figcaption class="mt-2 text-sm"><strong>Hive 2</strong> · thermofolie</figcaption>
+  </figure>
+  <figure class="m-0">
+    <img src="/images/hives/beehive3.jpg" class="w-full h-60 object-cover object-top rounded-lg shadow-lg" alt="Beehive 3, covered with cotton fabric" />
+    <figcaption class="mt-2 text-sm"><strong>Hive 3</strong> · cotton</figcaption>
+  </figure>
+</div>
+
+<!--
+These are the three hives the data comes from. Which material works best is the
+question the data answers today.
+-->
+
+---
+
+# 📡 What sensors do the hives carry?
+
 <div class="grid grid-cols-2 gap-6 mt-4">
 <div>
-
-**Three beehives** at Bildungscampus Heilbronn, wired with **LoRaWAN sensors**, reporting continuously since **2025**.
 
 Each hive carries devices that measure what is happening inside and around it:
 
 - **Brood chamber** — three temperature probes (`tempC1/C2/C3`)
 - **Food chamber** — temperature + humidity
 - **Weather station** — temperature, humidity, wind, UV, pressure, light, rain
+
+<figure class="m-0 mt-4">
+  <img src="/images/hives/sensor-on-hive.jpg" class="h-36 rounded-lg shadow" alt="A LoRaWAN sensor mounted on the side of an open hive" />
+  <figcaption class="bh-small mt-1">A LoRaWAN sensor mounted on a hive</figcaption>
+</figure>
 
 </div>
 <div>
@@ -83,19 +109,15 @@ on three *different schedules* is what makes Exercise 4 make sense.
 <div class="grid grid-cols-2 gap-6 mt-4">
 <div>
 
-<div class="bh-kicker">Today · questions the data can answer</div>
-
-We wrapped the three hives in three different materials: **thermofolie**, **cotton** and **plastic**.
+<div class="bh-kicker">Today</div>
 
 <div class="bh-card mt-3">
 <div class="bh-card-h">🐝 Which material is best for the colony?</div>
 
 <span class="bh-small">
 
-- Which hive keeps its brood closest to **35 °C**?
-- Does brood stay steadier than the outside temperature?
-- Do the three brood probes in one hive agree?
-- Does one hive go silent more often than the others?
+- Whose brood stays closest to **35 °C**?
+- Whose brood stays steadiest?
 
 </span>
 </div>
@@ -107,23 +129,32 @@ We wrapped the three hives in three different materials: **thermofolie**, **cott
 
 <div class="bh-card mt-3">
 <div class="bh-card-h">🌡️ Colony health</div>
-<span class="bh-small">The bees hold brood at ~35 °C. When it drifts, something is wrong, and it drifts <em>before</em> the beekeeper can see it. A model could raise the alarm.</span>
+<span class="bh-small">Alert when brood temperature drifts.</span>
 </div>
 
 <div class="bh-card mt-3">
 <div class="bh-card-h">❄️ Overwintering</div>
-<span class="bh-small">Most colonies are lost in winter. Temperature and humidity history could flag the hives at risk while there is still time to act.</span>
+<span class="bh-small">Flag hives at risk before winter losses.</span>
 </div>
 
 </div>
 </div>
 
 <div class="bh-note mt-5">
-The question we answer today and the model we might train later need the same input: <strong>one clean row per hive per hour</strong>. That table is what we build today.
+Both need the same input: <strong>one clean row per hive per hour</strong>. That's what we build today.
 </div>
 
 <!--
 Pull the group toward the framing: we are not cleaning data for its own sake.
+
+Today: the three hives are wrapped in thermofolie, cotton and plastic. Other questions
+the data can answer: do the three brood probes in one hive agree? Does one hive go
+silent more often than the others?
+
+Later: bees hold brood at ~35 °C, and it drifts *before* the beekeeper can see a
+problem, so a model could raise the alarm. Most colonies are lost in winter;
+temperature and humidity history could flag the hives at risk while there is still
+time to act.
 
 There is no ML problem to solve yet, so today ends with a plot that answers the
 materials question. The same table is the input a model would need later, so none
@@ -136,33 +167,31 @@ of the work is wasted.
 
 <div class="mt-8 text-left max-w-3xl mx-auto">
 
-> An AI/ML model cannot tell the difference between a signal and a mistake in your table.<br>
-> It will happily learn the mistake.
+> A model can't tell a signal from a mistake. It will happily learn the mistake.
 
 </div>
 
-<div class="grid grid-cols-3 gap-4 mt-10 text-left">
+<div class="grid grid-cols-2 gap-4 mt-10 text-left max-w-3xl mx-auto">
 <div class="bh-card">
 <div class="bh-card-h">Duplicates</div>
-<span class="bh-small">Your "average temperature" is silently a weighted average — weighted by how many times the collector happened to insert the same row.</span>
-</div>
-<div class="bh-card">
-<div class="bh-card-h">Bad joins</div>
-<span class="bh-small">Three times the rows, no error message, and every summary statistic you compute afterwards is wrong.</span>
+<span class="bh-small">Rows inserted twice silently skew every average.</span>
 </div>
 <div class="bh-card">
 <div class="bh-card-h">Silent gaps</div>
-<span class="bh-small">A missing row is not a <code>NaN</code>. It is nothing at all — and nothing is very hard to notice.</span>
+<span class="bh-small">A missing row isn't a <code>NaN</code>. It's nothing, and nothing is hard to notice.</span>
 </div>
 </div>
 
 <div class="mt-8 bh-small">
-The usual industry estimate is that 60–80% of any data science project is this step.
+Typically 60–80% of a data science project is this step.
 </div>
 
 <!--
-Do not moralise for too long. One sentence per card and move on — they will meet all
-three of these for real within the hour.
+Do not moralise for too long. One sentence per card and move on — they will meet both
+of these for real within the hour.
+
+Duplicates: the "average temperature" becomes a weighted average, weighted by how many
+times the collector happened to insert the same row.
 -->
 
 ---
@@ -170,12 +199,12 @@ three of these for real within the hour.
 # The data · two small lookup tables
 
 <div class="bh-out-label mt-2">beehives · 3 rows · the hives</div>
-<pre class="bh-out">   beehive_id          name                                           notes
-0           1  Beehive No.1  Larry is standing alone, he needs some friends
-1           2  Beehive No.2            TamTam is the middle Sandwhich child
-2           3  Beehive No.3          BonBon is the smallest yet most active
+<pre class="bh-out">   beehive_id          name
+0           1  Beehive No.1
+1           2  Beehive No.2
+2           3  Beehive No.3
 </pre>
-<div class="bh-small mt-1">+ <code>location</code>, <code>installation_date</code>, <code>last_inspection_date</code></div>
+<div class="bh-small mt-1">+ <code>notes</code>, <code>location</code>, <code>installation_date</code>, <code>last_inspection_date</code></div>
 
 <div class="bh-out-label mt-4">sensors · 9 rows · the devices, and which hive each belongs to</div>
 <pre class="bh-out">   sensor_id  beehive_id            sensor_name             sensor_type             measurement_units
@@ -247,7 +276,7 @@ is where they find out why.
 
 # The target
 
-One row per hive per hour. `validate_features.py` enforces exactly these names.
+One row per hive per hour.
 
 <div class="grid grid-cols-2 gap-6 mt-3 text-sm">
 <div>
@@ -273,12 +302,9 @@ One row per hive per hour. `validate_features.py` enforces exactly these names.
 </div>
 </div>
 
-```bash
-uv run python workshop/validate_features.py workshop/out/features_hourly.parquet
-```
 
 <!--
-Green is not the goal. A table that passes but whose gap policy you cannot defend is worse than one that fails honestly.
+Green is not the goal. A table that passes but that you cannot explain is worse than one that fails honestly.
 -->
 
 ---
@@ -287,13 +313,13 @@ Green is not the goal. A table that passes but whose gap policy you cannot defen
 
 | # | Exercise | What you produce | Time |
 |---|---|---|---|
-| **0** | **Extract** | Three months of `data` + both lookup tables, pulled once, saved to disk | 30 min |
-| **1** | **Profile** | A written description of what is actually in there | 30 min |
-| **2** | **Deduplicate** | `data` at one row per real measurement, and a number for what you removed | 30 min |
-| **3** | **Reshape & join** | A hive frame and a weather frame, each with a grain you can state out loud | 60 min |
-| **4** | **Align time & gaps** | One row per hive-hour, with a written gap policy | 60 min |
-| **5** | **Validate & document** | `features_hourly.parquet` + `DATA_DICTIONARY.md` that pass the validator | 30 min |
-| **6** | **Look at what you built** | One chart of brood vs outside on a short window | 10 min |
+| **0** | **Extract** | Three tables, saved to disk | 10 min |
+| **1** | **Profile** | What is in the data | 30 min |
+| **2** | **Deduplicate** | One row per real reading | 30 min |
+| **3** | **Reshape & join** | A hive frame and a weather frame | 60 min |
+| **4** | **Align time & gaps** | One row per hive-hour | 30 min |
+| **5** | **Validate & document** | A validated file | 10 min |
+| **6** | **Look at what you built** | Plots that answer the question | 30 min |
 
 <!--
 Each exercise says **what to produce, not how**. The exercises build on each other, so do them in order.
