@@ -8,276 +8,304 @@ class: bh-section
 One clock. Long to wide. Every hive-hour, even the silent ones.
 
 <div class="mt-8 bh-small">
-<code>.dt.floor("h")</code> · <code>groupby().mean()</code> · <code>unstack</code> · <code>reindex</code> · <code>interpolate</code>
+<code>.dt.floor("h")</code> · <code>groupby().mean()</code> · <code>unstack</code> · <code>reindex</code> · <code>merge</code>
 </div>
 
 ---
 
 # Floor timestamps to the hour
 
-`.dt` unlocks datetime methods on a whole column at once.
-
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+<JupyterCell n="29">
 
 ```python
-hive_rows = hive_rows.assign(
-    hour=hive_rows["ts"].dt.floor("h")
-)
+hive_rows = hive_rows.assign(hour=hive_rows["ts"].dt.floor("h"))
 hive_rows[["ts", "hour"]].head()
 ```
 
-<div class="bh-out-label mt-3">ts vs hour</div>
-<pre class="bh-out">                 ts                hour
-2025-08-01 04:11:02 2025-08-01 04:00:00
-2025-08-01 04:11:02 2025-08-01 04:00:00
-2025-08-01 04:31:18 2025-08-01 04:00:00
-</pre>
+<template #output>
+<pre>                        ts                hour
+0  2026-07-28 10:28:39.165 2026-07-28 10:00:00
+1  2026-07-28 10:28:39.165 2026-07-28 10:00:00
+26 2026-07-28 10:34:28.255 2026-07-28 10:00:00
+27 2026-07-28 10:34:28.255 2026-07-28 10:00:00
+28 2026-07-28 10:34:28.255 2026-07-28 10:00:00</pre>
+</template>
+</JupyterCell>
 
-</div>
-<div>
-
-```python
-ts = hive_rows["ts"]
-
-ts.dt.floor("h")      # 04:11:02 -> 04:00:00
-ts.min(), ts.max()    # the period you actually have
-ts.diff()             # gap to previous row (Timedelta)
-```
-
-<div class="bh-small mt-3">
-If <code>.dt</code> raises <em>"Can only use .dt accessor with datetimelike values"</em>, your column is a string. <code>pd.to_datetime(col)</code> fixes it — or you saved CSV in Exercise 0.
+<div v-click class="bh-note mt-4">
+<code>.dt</code> unlocks datetime methods on a whole column. Do the same for <code>weather_rows</code>.
 </div>
 
-<div class="bh-note mt-3">
-Repeat the same <code>.assign(hour=...)</code> on <code>weather_rows</code>. Weather's grain will be <code>(hour,)</code>, not <code>(beehive_id, hour)</code>.
-</div>
+<!--
+Hive devices report every ~20 min, the weather station every ~10 min, so every hour
+has readings to average.
 
-</div>
-</div>
+The index jumps 1 -> 26 because the weather rows were filtered out.
+
+If .dt raises "Can only use .dt accessor with datetimelike values", the column is a
+string: pd.to_datetime(col) fixes it, or they saved CSV in Exercise 0.
+-->
 
 ---
 
-# `groupby` + `mean` — still long
+# groupby + mean: still long
+
+<JupyterCell n="30">
 
 ```python
-hive_h = (hive_rows
-    .groupby(["beehive_id", "hour", "measurement_unit"])["value"]
-    .mean())     # Series with a 3-level MultiIndex
-hive_h.head()
+hive_hourly = hive_rows.groupby(["beehive_id", "hour", "measurement_unit"])["value"].mean()
+hive_hourly.head()
 ```
 
-<div class="grid grid-cols-2 gap-6 mt-4">
-<div>
+<template #output>
+<pre>beehive_id  hour                 measurement_unit
+1           2026-07-28 10:00:00  relativeHumidity    65.70
+                                 tempC1              32.70
+                                 tempC2              29.05
+                                 tempC3              30.20
+                                 temperature         30.85
+Name: value, dtype: float64</pre>
+</template>
+</JupyterCell>
 
-<div class="bh-out-label">still long — one row per hive-hour-measurement</div>
-<pre class="bh-out">beehive_id  hour                 measurement_unit
-1           2025-08-01 04:00:00  tempC1           34.9
-                                 tempC2           35.2
-                                 tempC3           34.7
-                                 temperature      21.3
-Name: value, dtype: float64
-</pre>
-
-</div>
-<div>
-
-If a device reported twice in the same hour, `mean()` collapses them. Look at the **index** — three levels, still one measurement per row.
-
-<div class="bh-note mt-3">
-Same three verbs for weather, grain <code>(hour, measurement_unit)</code> — no <code>beehive_id</code>.
+<div v-click class="bh-note mt-4">
+One value per hive, hour and measurement. Look at the <strong>index</strong>: three levels, still one measurement per row.
 </div>
 
-<div class="bh-small mt-3">
-Pass <code>observed=True</code> when grouping categoricals to avoid materialising unused combinations.
-</div>
+<!--
+A device reports about three times an hour, and mean() collapses those into one value.
 
-</div>
-</div>
+Pass observed=True when grouping categoricals to avoid materialising unused combinations.
+-->
 
 ---
 
-# Long → wide: `unstack` (and `pivot`)
+# Long → wide: unstack
+
+<JupyterCell n="31" at="1">
 
 ```python
-hive_h = hive_h.unstack("measurement_unit")    # move that level up into columns
+hive_hourly = hive_hourly.unstack("measurement_unit")
+hive_hourly.head()
 ```
 
-<div class="grid grid-cols-2 gap-6 mt-4">
-<div>
-
-<div class="bh-out-label">after groupby().mean() — long</div>
-<pre class="bh-out">beehive_id  hour        measurement_unit
-1           2025-08-01  tempC1           34.9
-                        tempC2           35.2
-                        tempC3           34.7
-                        temperature      21.3
-Name: value, dtype: float64
-</pre>
-
-</div>
-<div>
-
-<div class="bh-out-label">after .unstack() — wide</div>
-<pre class="bh-out">measurement_unit    tempC1  tempC2  tempC3  temperature
+<template #output>
+<pre>measurement_unit                relativeHumidity     tempC1     tempC2  tempC3  temperature
 beehive_id hour
-1          2025-08-01  34.9    35.2    34.7         21.3
-           2025-08-02  35.0    35.1    34.8         21.5
-</pre>
+1          2026-07-28 10:00:00         65.700000  32.700000  29.050000    30.2    30.850000
+           2026-07-28 11:00:00         61.266667  33.466667  30.133333    31.5    31.433333
+           2026-07-28 12:00:00         59.566667  34.033333  31.433333    32.9    31.766667
+           2026-07-28 13:00:00         59.600000  35.066667  32.666667    33.9    32.433333
+           2026-07-28 14:00:00         57.500000  35.150000  33.450000    34.6    33.233333</pre>
+</template>
+</JupyterCell>
 
-</div>
-</div>
+<JupyterCell n="32" at="2" label="same three verbs for weather">
 
-<div class="grid grid-cols-2 gap-6 mt-4">
-<div class="bh-note">
-<code>unstack</code> takes one index level and spreads it across columns. <code>stack</code> is the inverse. <code>df.pivot_table(index=…, columns=…, values=…, aggfunc="mean")</code> does the same job in one call.
-</div>
-<div class="bh-note">
-<code>.add_prefix("outside_")</code> renames every column at once — handy right after unstacking the weather frame.
-</div>
-</div>
-
----
-
-# Building a complete index: `date_range` + `reindex`
+<div class="relative">
+<div v-click.hide="3">
 
 ```python
-hours = pd.date_range(data["ts"].min().floor("h"),
-                      data["ts"].max().floor("h"), freq="h")
-grid  = pd.MultiIndex.from_product(
-    [beehives["beehive_id"], hours],
-    names=["beehive_id", "hour"])
-
-features = hive_h.reindex(grid)     # rows not present become all-NaN
+weather_rows = weather_rows.assign(hour=...)
+weather_hourly = weather_rows.groupby([...])["value"].mean()
 ```
 
-<div class="grid grid-cols-2 gap-6 mt-4">
-<div>
-
-<div class="bh-out-label">before reindex — only observed hours</div>
-<pre class="bh-out">beehive_id hour                 tempC1
-1          2025-08-01 04:00      34.9
-1          2025-08-01 05:00      35.0
-1          2025-08-01 09:00      35.3   ← 3 hours skipped
-</pre>
-
 </div>
-<div>
+<div v-click="3" class="absolute inset-0">
 
-<div class="bh-out-label">after reindex — absence is now visible</div>
-<pre class="bh-out">beehive_id hour                 tempC1
-1          2025-08-01 04:00      34.9
-1          2025-08-01 05:00      35.0
-1          2025-08-01 06:00       NaN
-1          2025-08-01 07:00       NaN
-1          2025-08-01 08:00       NaN
-1          2025-08-01 09:00      35.3
-</pre>
+```python
+weather_rows = weather_rows.assign(hour=weather_rows["ts"].dt.floor("h"))
+weather_hourly = weather_rows.groupby(["hour", "measurement_unit"])["value"].mean()
+```
 
 </div>
 </div>
 
-<div class="bh-note mt-4">
-Build the grid from the extract window, not from what one device happened to cover. <code>reindex</code> turns every expected-but-absent row into a <code>NaN</code> you can count.
+</JupyterCell>
+
+<JupyterCell n="33" at="4">
+
+```python
+weather_hourly = weather_hourly.unstack("measurement_unit").add_prefix("outside_")
+```
+
+</JupyterCell>
+
+<div v-click="5" class="bh-small mt-3">
+Weather has no hive: its grain is just <code>hour</code>. <code>add_prefix</code> stops <code>temperature</code> clashing with the brood sensor's.
 </div>
+
+<!--
+unstack takes one index level and spreads it across columns; stack is the inverse.
+df.pivot_table(index=..., columns=..., values=..., aggfunc="mean") does the same job in one call.
+
+Ask the room for the weather groupby keys before the reveal click.
+-->
 
 ---
 
-# Handling gaps: `interpolate` and `fillna`
+# Building a complete index: date_range + reindex
 
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+<div class="bh-note bh-small">
+<strong>Invisible NULLs.</strong> A power outage or a broken sensor leaves no NULL behind: the row is simply missing. A complete grid turns every missing hour into a row of <code>NaN</code> you can count.
+</div>
+
+<JupyterCell n="34" at="2">
+
+<div class="relative">
+<div v-click.hide="1">
 
 ```python
-s.fillna(0)              # a constant
-s.ffill()                # carry the last value forward
-s.bfill()                # carry the next value backward
+START_TIME_H = ...
+END_TIME_H = ...
+hours = pd.date_range(START_TIME_H, END_TIME_H, freq="h", name="hour")
+```
 
-s.interpolate(
-    method="time",       # respect the timestamp spacing
-    limit=3,             # at most 3 consecutive NaNs
-    limit_area="inside", # never extrapolate
+</div>
+<div v-click="1" class="absolute inset-0">
+
+```python
+START_TIME_H = distinct_sensor_readings["ts"].min().floor("h")
+END_TIME_H = distinct_sensor_readings["ts"].max().floor("h")
+hours = pd.date_range(START_TIME_H, END_TIME_H, freq="h", name="hour")
+```
+
+</div>
+</div>
+
+</JupyterCell>
+
+<JupyterCell n="35" at="3" label="every hive × every hour">
+
+```python
+grid = pd.MultiIndex.from_product(
+    [beehives["beehive_id"], hours], names=["beehive_id", "hour"]
 )
+features = hive_hourly.reindex(grid)
+print(f"hive hours: {len(hive_hourly):,} observed vs {len(features):,} complete")
 ```
 
-<div class="bh-out-label mt-3">before → after, limit=3</div>
-<pre class="bh-out">04:00  34.9      34.9
-05:00  35.0      35.0
-06:00   NaN      35.1
-07:00   NaN      35.2
-08:00   NaN      35.2
-09:00  35.3      35.3
-</pre>
+<template #output>
+<pre>hive hours: 6,564 observed vs 6,627 complete</pre>
+</template>
+</JupyterCell>
 
-</div>
-<div>
-
-<div class="bh-warn">
-Every filled value is a value <strong>you invented</strong>. A one-hour gap between two readings of 35.0 and 35.3 is a fair guess. A five-day outage is not — leave it <code>NaN</code>.
-</div>
-
-<div class="bh-note mt-3">
-So: look at the <em>distribution</em> of gap lengths before choosing a policy.
+<JupyterCell n="36" at="4" label="weather: every hour, no hive">
 
 ```python
-gaps = (hive_h.reset_index()
-        .groupby("beehive_id")["hour"]
-        .diff().dt.total_seconds() / 3600)
-gaps.median(), gaps.quantile(0.99), gaps.max()
-# (0.25, 4.0, 121.0)
+observed = len(weather_hourly)
+weather_hourly = weather_hourly.reindex(hours)
+print(f"weather hours: {observed:,} observed vs {len(weather_hourly):,} complete")
 ```
-</div>
 
-<div class="bh-small mt-3">
-Whatever you choose, <strong>write the rule down</strong>. That sentence belongs in <code>DATA_DICTIONARY.md</code>.
-</div>
+<template #output>
+<pre>weather hours: 2,209 observed vs 2,209 complete</pre>
+</template>
+</JupyterCell>
 
-</div>
-</div>
+<!--
+Ask the room for the start and end before the reveal click. Build the grid from the
+extract window, not from what one device happened to cover.
+
+reindex turns every expected-but-absent row into a row of NaN you can count. On the local
+extract: 6,564 observed hive-hours vs 6,627 in the grid, so 63 are absent. The weather
+station has no missing hours in this window.
+-->
 
 ---
 
-# Index gymnastics
+# Measuring gaps
 
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+<JupyterCell n="37">
 
 ```python
-df.reset_index()          # index levels -> columns
-df.set_index("hour")      # a column -> the index
-df.droplevel("beehive_id")  # drop one MultiIndex level
-df.sort_index()
-
-# group by an index level, not a column
-df.groupby(level="beehive_id")
-
-# join on an index level
-features.join(weather_h, on="hour")
+hive_hourly.reset_index().groupby("beehive_id")["hour"].diff()
 ```
 
-<div class="bh-note mt-3">
-<code>join</code> is <code>merge</code>'s index-aware cousin: it lines the right frame's <em>index</em> up against a column or index level on the left. Perfect for attaching one weather table to every hive. Print <code>len</code> before and after.
+<template #output>
+<pre>0                  NaT
+1      0 days 01:00:00
+2      0 days 01:00:00
+3      0 days 01:00:00
+4      0 days 01:00:00
+             ...
+6559   0 days 01:00:00
+6560   0 days 01:00:00
+6561   0 days 01:00:00
+6562   0 days 01:00:00
+6563   0 days 01:00:00
+Name: hour, Length: 6564, dtype: timedelta64[us]</pre>
+</template>
+</JupyterCell>
+
+<JupyterCell n="38" label="the longest gap">
+
+```python
+hive_hourly.reset_index().groupby("beehive_id")["hour"].diff().max()
+```
+
+<template #output>
+<pre>Timedelta('0 days 05:00:00')</pre>
+</template>
+</JupyterCell>
+
+<div v-click class="bh-note mt-3">
+The time since the previous observed hour, per hive. <code>1 hour</code> means no gap. Missing hours stay <code>NaN</code>.
 </div>
 
-</div>
-<div>
+<!--
+Add .value_counts() to see the gaps. On the local extract:
+  1 hour 6,509 · 2 hours 45 · 3 hours 4 · 4 hours 2 · 5 hours 1
+The first row of each hive is NaT: there is no previous hour to compare with.
+-->
 
-<div class="bh-out-label">a MultiIndex, printed</div>
-<pre class="bh-out">                        tempC1  tempC2
-beehive_id hour
-1          2025-08-01     34.9    35.2
-           2025-08-02     35.0    35.1
-2          2025-08-01     34.6    34.9
-           2025-08-02     34.8    35.0
-</pre>
+---
 
-<div class="bh-small mt-2">
-The blank cells under <code>1</code> are not missing — pandas just does not repeat a repeated index label.
+# Attach the weather: merge on hour
+
+<JupyterCell n="39" at="2">
+
+<div class="relative">
+<div v-click.hide="1">
+
+```python
+before = len(features)
+features = features.reset_index().merge(
+    weather_hourly.reset_index(), on=..., how="left", validate="many_to_one"
+)
+print(f"features {before:,} -> {len(features):,} after weather merge")
+```
+
+</div>
+<div v-click="1" class="absolute inset-0">
+
+```python
+before = len(features)
+features = features.reset_index().merge(
+    weather_hourly.reset_index(), on="hour", how="left", validate="many_to_one"
+)
+print(f"features {before:,} -> {len(features):,} after weather merge")
+```
+
+</div>
 </div>
 
-<div class="bh-warn mt-3">
-Most alignment bugs in pandas are index bugs. When two frames refuse to line up, print <code>df.index</code> on both.
+<template #output>
+<pre>features 6,627 -> 6,627 after weather merge</pre>
+</template>
+</JupyterCell>
+
+<div v-click="3" class="bh-note mt-4">
+One weather hour attaches to all three hives. <code>validate="many_to_one"</code> proves weather has one row per hour, so the row count cannot grow.
 </div>
 
-</div>
-</div>
+<!--
+Ask the room for the merge key before the reveal click.
+
+reset_index() turns the index levels into columns so merge(on=...) can find hour.
+Most alignment bugs in pandas are index bugs: when two frames refuse to line up, print
+df.index on both.
+
+weather_hourly has no beehive_id after the Exercise 3 collapse, so on=["beehive_id", "hour"]
+raises a KeyError. That error is the hint.
+-->

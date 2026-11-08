@@ -14,12 +14,12 @@ Jupyter in five minutes, then pandas and matplotlib
 <div class="grid grid-cols-2 gap-6 mt-3">
 <div>
 
-A notebook is a **list of cells**. Each cell is either **Markdown** (prose) or **Code** (Python).
-
-You run a cell and its output appears directly underneath it. State — your variables — **persists between cells**, in one long-lived Python session called the *kernel*.
+- A notebook is a list of **cells**: Markdown or Code.
+- Run a cell → output appears below it.
+- Variables **persist** between cells (the *kernel*).
 
 <div class="bh-note mt-4">
-The last expression in a cell is displayed automatically. <code>df.head()</code> on its own line prints a nicely formatted table; <code>print(df.head())</code> prints plain text.
+The last line is shown automatically: <code>df.head()</code> → a table.
 </div>
 
 </div>
@@ -41,43 +41,56 @@ The last expression in a cell is displayed automatically. <code>df.head()</code>
 
 # Jupyter: the one trap
 
-<div class="bh-warn mt-4">
-<strong>Cells remember. Out-of-order execution is the #1 source of "it worked yesterday".</strong>
-</div>
+<div class="grid grid-cols-5 gap-6 mt-4">
+<div class="col-span-3">
 
-<div class="grid grid-cols-2 gap-6 mt-5">
-<div>
+<JupyterCell n="1" at="1">
 
 ```python
-# cell 1
 data = pd.read_parquet("data.parquet")
-data["temp"].mean() # 347.0  — sensor sends deci-degrees
+data["temp"].mean()
 ```
+
+<template #output>
+<pre>347.0</pre>
+</template>
+</JupyterCell>
+
+<JupyterCell n="2" at="2" rerun="3" rerun-n="3" label="fix the scale, then run the same cell again">
 
 ```python
-# cell 2 — fix the scale
 data["temp"] = data["temp"] / 10
-data["temp"].mean() # 34.7 °C  ✅
+data["temp"].mean()
 ```
 
-```python
-# cell 2 again (you re-ran it)
-data["temp"] = data["temp"] / 10
-data["temp"].mean() # 3.47 °C  — ❌ no error, no warning 
-```
+<template #output>
+<pre>34.7  ✅</pre>
+</template>
+<template #rerun-output>
+<pre>3.47  ❌ no error, no warning</pre>
+</template>
+</JupyterCell>
 
 </div>
-<div>
+<div class="col-span-2">
 
-Anything that *transforms a column in place*, *appends*, or *merges* is unsafe to re-run.
-
-<div class="bh-note mt-4">
-Fix: <strong>Kernel → Restart Kernel and Run All Cells</strong> before you trust a result. If your notebook does not survive that, it is not reproducible.
+<div class="bh-warn">
+<strong>Cells remember.</strong> Re-running a cell that changes data changes it again.
 </div>
 
-<div class="mt-4 bh-small">
-The number in <code>[12]</code> beside a cell is its execution order, not its position. If those numbers are not ascending down the page, be suspicious.
+<div v-click="4" class="bh-note mt-4">
+Fix: <strong>Restart Kernel and Run All</strong> before you trust a result.
 </div>
 
 </div>
 </div>
+
+<!--
+The sensor sends deci-degrees, so cell 1 shows 347.0. Click 2 runs the fix; click 3 runs
+the same cell again, which divides by 10 a second time.
+
+Anything that transforms a column in place, appends, or merges is unsafe to re-run.
+
+The number in [3] beside a cell is its execution order, not its position. If those
+numbers are not ascending down the page, be suspicious.
+-->

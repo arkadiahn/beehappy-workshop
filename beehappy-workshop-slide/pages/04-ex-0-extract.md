@@ -36,31 +36,38 @@ with psycopg.connect(DATABASE_URL,
 </div>
 <div>
 
-<span class="bh-small">
+<span class="bh-small" v-click="1">`load_dotenv` reads `.env` into the environment.</span>
 
-`load_dotenv` reads `.env` into the environment — the connection string stays out of your notebook.
+<span class="bh-small" v-click="2">`psycopg.connect` opens the connection. `with` closes it for you, even if a cell raises.</span>
 
-`psycopg.connect` opens the connection. `with` closes it for you, even if a cell raises.
+<span class="bh-small" v-click="3">`cur.execute` sends the SQL, `cur.fetchall` pulls the rows back as a list of tuples, and `cur.description` carries the column names.</span>
 
-`cur.execute` sends the SQL, `cur.fetchall` pulls the rows back as a list of tuples, and `cur.description` carries the column names.
+<div v-click="4" class="mt-4">
 
-</span>
+```sql
+SELECT *       -- which columns: all
+FROM data      -- which table
+WHERE ts >= now() - INTERVAL '3 months'
+               -- which rows: the last 3 months
+```
 
-<div class="bh-warn mt-3">
-Copy <code>.env.example</code> to <code>.env</code> — connection strings belong in <code>.env</code>, never in a committed notebook. Keep <code>sslmode=require</code>: this is the <strong>production</strong> database, over the public internet.
+<span class="bh-small">Filter in SQL, so only three months cross the network.</span>
+
 </div>
 
 </div>
 </div>
 
 <!--
-Wait until everyone's cell 1 prints the host before moving on. Nobody gets further
+Wait until everyone's first cell prints the database URL before moving on. Nobody gets further
 without a working connection.
 
-Why the read-only role (grafana_ro): the superuser can DROP the live tables, and this is
-the real database, not a copy.
+Today's role is the postgres superuser (grafana_ro does not work), and this is the real
+database, not a copy. Only run the SELECTs in the notebook.
 
-The .env habit is the point even though today's URL is not a secret — the next one will be.
+The .env habit is the point: the password stays out of the notebook and out of git.
+
+SQL in ten seconds: SELECT picks columns, FROM picks the table, WHERE picks rows.
 
 If someone hangs on connect, it is almost always corporate wifi blocking port 45838 —
 have them tether to a phone.
@@ -68,65 +75,46 @@ have them tether to a phone.
 
 ---
 
-# The SQL you need today
+# Read it back from disk
 
-<div class="grid grid-cols-2 gap-6 mt-3">
-<div>
+<JupyterCell n="1" at="2">
 
-```sql
-SELECT * FROM beehives
+<div class="relative">
+<div v-click.hide="1">
+
+```python
+beehives = pd.read_parquet(...)
+sensors  = ...
+raw_sensor_readings = ...
 ```
 
-<span class="bh-small">
-
-`SELECT` — which columns you want. `*` means **all of them**.
-
-`FROM beehives` — which table to read.
-
-That is the whole statement: *give me every column of every row in `beehives`*.
-
-</span>
-
-<div class="bh-note mt-3">
-Fine for <code>beehives</code> and <code>sensors</code> — three and nine rows. Not fine for <code>data</code>.
 </div>
+<div v-click="1" class="absolute inset-0">
 
-</div>
-<div>
-
-```sql
-SELECT * FROM data
-WHERE ts >= (now() AT TIME ZONE 'UTC')
-            - INTERVAL '3 months'
+```python
+beehives = pd.read_parquet(RAW / "beehives.parquet")
+sensors  = pd.read_parquet(RAW / "sensors.parquet")
+raw_sensor_readings = pd.read_parquet(RAW / "data.parquet")
 ```
 
-<span class="bh-small">
-
-`WHERE` keeps only the rows matching a condition — here, the last three months.
-
-`data` is millions of rows. The filter belongs **in SQL**, so the rest never crosses the network.
-
-</span>
-
-<div class="bh-warn mt-3">
-<code>ts</code> is <code>timestamp without time zone</code> holding UTC — so compare against UTC, not the server's local clock.
+</div>
 </div>
 
-</div>
+</JupyterCell>
+
+<div v-click="3" class="bh-note mt-4">
+<code>data.parquet</code> becomes <code>raw_sensor_readings</code>: the name says it is raw and not yet cleaned. Everything from Exercise 1 on starts from these three dataframes.
 </div>
 
 <!--
-Three queries in total, one per table — a dict of {name: sql} that you loop over.
-
-If someone asks "why not SELECT the columns by name": you can, and in production you
-should. Today `*` is honest — part of the exercise is discovering what is in there.
+Ask the room for the three lines before the reveal click. RAW is defined in the setup
+cell: workshop/out/raw/. Reading back from Parquet keeps every dtype, so ts is still a
+timestamp.
 -->
 
 ---
 
 # Reading and writing files
-
-<div class="grid grid-cols-2 gap-6 mt-3">
 
 <div>
 
@@ -143,25 +131,5 @@ should. Today `*` is honest — part of the exercise is discovering what is in t
 Save <code>ts</code> to CSV and read it back and it is a <strong>string</strong>. Then <code>.dt.floor("h")</code> fails in Exercise 4 with an error message that never mentions CSV.
 </div>
 
-</div>
-
-<div>
-
-```python
-frames[name] = pd.DataFrame(
-    cur.fetchall(),
-    columns=[c.name for c in cur.description],
-)
-frames[name].to_parquet(
-    RAW / f"{name}.parquet", index=False)
-
-data = pd.read_parquet(RAW / "data.parquet")
-```
-
-<div class="bh-note mt-4">
-<code>index=False</code> on write: your row index is usually just 0,1,2… — do not save it as a column.
-</div>
-
-</div>
 
 </div>

@@ -13,30 +13,30 @@ The functions you need
 
 <div class="grid grid-cols-4 gap-3 mt-4">
 
-<div class="bh-card">
-<div class="bh-card-h">The lingua franca</div>
-<span class="bh-small">scikit-learn, matplotlib, seaborn, plotly all take a <code>DataFrame</code> directly.</span>
-</div>
-
-<div class="bh-card">
+<div v-click="1" class="bh-card">
 <div class="bh-card-h">Built for exactly this job</div>
 <span class="bh-small">Missing values, duplicates, time zones, joins, reshaping.</span>
 </div>
 
-<div class="bh-card">
+<div v-click="2" class="bh-card">
+<div class="bh-card-h">The lingua franca</div>
+<span class="bh-small">scikit-learn, matplotlib, seaborn, plotly all take a <code>DataFrame</code> directly.</span>
+</div>
+
+<div v-click="3" class="bh-card">
 <div class="bh-card-h">Reads everything</div>
 <span class="bh-small"><code>read_sql</code>, <code>read_parquet</code>, <code>read_csv</code>, <code>read_excel</code> — and a <code>to_*</code> for each.</span>
 </div>
 
-<div class="bh-card">
+<div v-click="4" class="bh-card">
 <div class="bh-card-h">Fifteen years of answers</div>
 <span class="bh-small">Whatever you get stuck on, someone already asked it.</span>
 </div>
 
 </div>
 
-<div class="bh-note mt-5">
-Three months of readings is a few hundred MB — it fits in memory, so the simplest tool is also the right one.
+<div v-click="5" class="bh-note mt-5">
+Three months of readings is about half a million rows — it fits in memory, so the simplest tool is also the right one.
 </div>
 
 <!--
@@ -47,79 +47,74 @@ Three months of readings is a few hundred MB — it fits in memory, so the simpl
   who picks up your notebook next year will read it without a manual.
 -->
 
----
-
-# When pandas is *not* the right tool
-
-<div class="grid gap-6 mt-4">
-<div>
-
-| Your data | Reach for |
-|---|---|
-| fits in RAM (**today**) | **pandas** |
-| 10–100 GB, one machine | **Polars**, **DuckDB** |
-| still in a database | **SQL** — aggregate first |
-
-<div class="bh-small mt-4">
-The four ideas — <code>filter</code>, <code>groupby</code>, <code>join</code>, <code>pivot</code> — are the same in all of them.
-</div>
-
-</div>
-</div>
-
-<!--
-The two alternatives, if anyone asks:
-
-- Polars — same DataFrame idea, written in Rust, multi-threaded and lazy. Often 5–30x
-  faster with a very similar API. The natural next step when pandas starts to hurt.
-- DuckDB — runs SQL straight over Parquet files or over a DataFrame, handles
-  larger-than-memory, no server to set up.
-
-The warning to say out loud: pulling millions of rows over the network only to `.head()`
-them is the most common way to make a laptop unusable. If the answer is an average,
-compute the average in the database.
--->
 
 ---
 
 # What pandas is
 
-<div class="grid grid-cols-2 gap-6 mt-3">
+<div class="grid gap-6 mt-3" style="grid-template-columns: 3fr 2fr">
 <div>
+
+<JupyterCell n="1" label="a DataFrame">
 
 ```python
 import pandas as pd
 
 df = pd.DataFrame({
-    "sensor_id": [3, 3, 7],
+    "sensor_id": [8, 8, 6],
     "unit": ["tempC1", "tempC2", "temperature"],
-    "value": [34.9, 35.2, 21.3],
+    "value": [35.5, 35.7, 35.6],
 })
 df
 ```
 
-<div class="bh-out-label">output</div>
-<pre class="bh-out">   sensor_id         unit  value
-0          3       tempC1   34.9
-1          3       tempC2   35.2
-2          7  temperature   21.3
-</pre>
-</div>
+<template #output>
+<pre>   sensor_id         unit  value
+0          8       tempC1   35.5
+1          8       tempC2   35.7
+2          6  temperature   35.6</pre>
+</template>
+</JupyterCell>
 
+</div>
 <div>
 
+<JupyterCell n="2" label="one column: a Series">
+
 ```python
-df["value"]           # a Series
-type(df["value"])     # pandas.core.series.Series
+df["value"]
 ```
 
-<div class="bh-out-label">output</div>
-<pre class="bh-out">0    34.9
-1    35.2
-2    21.3
-Name: value, dtype: float64
-</pre>
+<template #output>
+<pre>0    35.5
+1    35.7
+2    35.6
+Name: value, dtype: float64</pre>
+</template>
+</JupyterCell>
 
+<JupyterCell n="3">
+
+```python
+type(df["value"])
+```
+
+<template #output>
+<pre>pandas.Series</pre>
+</template>
+</JupyterCell>
+
+</div>
+</div>
+
+<div v-click="4" class="grid grid-cols-2 gap-4 mt-4">
+<div class="bh-card">
+<div class="bh-card-h">Row-oriented · transactional</div>
+<span class="bh-small">Postgres stores each reading as a whole row. Fast to <strong>write</strong> one reading at a time.</span>
+</div>
+<div class="bh-card">
+<div class="bh-card-h">Column-oriented · analytical</div>
+<span class="bh-small">pandas and Parquet store each column together. Fast to <strong>analyse</strong>: <code>df["value"].mean()</code> reads one column.</span>
 </div>
 </div>
 
@@ -132,4 +127,11 @@ Name: value, dtype: float64
 A DataFrame is essentially a dict of Series that share an index.
 
 The bold left-hand column is the <strong>index</strong>, not data. It comes back to matter in Exercise 4.
+
+Row vs column: the sensors write into Postgres (OLTP) one reading at a time, so each row
+is stored together. Analysis asks "average of this column over half a million rows", so
+pandas keeps each column as one contiguous typed array. That is why column operations are
+fast and looping over rows is slow. Exercise 0 is the bridge: read from the row store
+once, then work in columns.
 -->
+
