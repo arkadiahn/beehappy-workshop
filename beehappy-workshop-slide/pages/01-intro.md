@@ -69,8 +69,8 @@ question the data answers today.
 
 Each hive carries devices that measure what is happening inside and around it:
 
-- **Brood chamber** — three temperature probes (`tempC1/C2/C3`)
-- **Food chamber** — temperature + humidity
+- **Three probes** — C1 brood, C2 food, C3 empty top
+- **Brood sensor** — temperature + humidity
 - **Weather station** — temperature, humidity, wind, UV, pressure, light, rain
 
 <figure class="m-0 mt-4">
@@ -81,37 +81,73 @@ Each hive carries devices that measure what is happening inside and around it:
 </div>
 <div>
 
-```mermaid {scale: 0.62, theme: 'base', themeVariables: {primaryColor: '#fef3c7', primaryBorderColor: '#f59e0b', primaryTextColor: '#92400e', lineColor: '#d97706', secondaryColor: '#fde68a', tertiaryColor: '#fffbeb', fontFamily: 'Inter, sans-serif'}}
-graph TD
-  A[Brood sensor<br/>Dragino D23-LB] --> G[LoRaWAN<br/>gateway]
-  B[Food sensor<br/>Dragino S31-LB] --> G
-  C[Weather station<br/>SenseCAP S2120] --> G
-  G --> D[ChatBotCollector<br/>service]
-  D --> E[(PostgreSQL)]
-```
-
-<div class="bh-note mt-3">
-The collector is a service with bugs. <br>
-</div>
+<svg viewBox="0 -24 470 344" class="w-full" role="img" aria-label="Cross-section of one hive: an empty top level, a food level with sugar, and a brood level at the bottom. A probe device on the side has one probe in each level (C3 top, C2 food, C1 brood). A temperature and humidity sensor sits in the brood level. A weather station stands on a pole beside the hive.">
+  <g font-family="Inter, sans-serif" fill="#92400e">
+    <line x1="10" y1="312" x2="460" y2="312" stroke="#d6c7a1" stroke-width="2"/>
+    <line x1="62" y1="96" x2="62" y2="312" stroke="#a16207" stroke-width="4"/>
+    <rect x="38" y="76" width="48" height="26" rx="4" fill="#fde68a" stroke="#d97706" stroke-width="1.5"/>
+    <line x1="62" y1="76" x2="62" y2="58" stroke="#a16207" stroke-width="2"/>
+    <line x1="46" y1="58" x2="78" y2="58" stroke="#a16207" stroke-width="2"/>
+    <circle cx="46" cy="58" r="5" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+    <circle cx="78" cy="58" r="5" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+    <text x="62" y="-10" text-anchor="middle" style="font-size:13px;font-weight:700">Weather station</text>
+    <text x="62" y="4" text-anchor="middle" style="font-size:10px">SenseCAP S2120</text>
+    <text x="62" y="18" text-anchor="middle" style="font-size:9.5px" fill="#78350f">temp · humidity</text>
+    <text x="62" y="30" text-anchor="middle" style="font-size:9.5px" fill="#78350f">wind · UV · light</text>
+    <text x="62" y="42" text-anchor="middle" style="font-size:9.5px" fill="#78350f">pressure · rain</text>
+    <polygon points="160,74 340,74 352,92 148,92" fill="#d97706"/>
+    <rect x="156" y="92" width="188" height="62" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+    <rect x="156" y="154" width="188" height="62" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <rect x="156" y="216" width="188" height="70" fill="#fde68a" stroke="#d97706" stroke-width="2"/>
+    <rect x="166" y="286" width="12" height="26" fill="#a16207"/>
+    <rect x="322" y="286" width="12" height="26" fill="#a16207"/>
+    <text x="170" y="128" style="font-size:13px;font-weight:700">Top</text>
+    <text x="170" y="143" style="font-size:10px" fill="#78350f">empty</text>
+    <text x="170" y="190" style="font-size:13px;font-weight:700">Food</text>
+    <text x="170" y="205" style="font-size:10px" fill="#78350f">sugar</text>
+    <text x="170" y="250" style="font-size:13px;font-weight:700">Brood</text>
+    <text x="170" y="265" style="font-size:10px" fill="#78350f">~35 °C</text>
+    <rect x="214" y="234" width="62" height="34" rx="4" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+    <text x="245" y="249" text-anchor="middle" style="font-size:10px;font-weight:700">S31</text>
+    <text x="245" y="262" text-anchor="middle" style="font-size:8.5px" fill="#78350f">temp + hum.</text>
+    <path d="M384 176 C 360 176, 352 123, 320 123" fill="none" stroke="#b45309" stroke-width="1.5"/>
+    <path d="M384 184 C 362 184, 352 185, 320 185" fill="none" stroke="#b45309" stroke-width="1.5"/>
+    <path d="M384 192 C 360 192, 352 250, 320 250" fill="none" stroke="#b45309" stroke-width="1.5"/>
+    <circle cx="316" cy="123" r="6" fill="#b45309"/>
+    <circle cx="316" cy="185" r="6" fill="#b45309"/>
+    <circle cx="316" cy="250" r="6" fill="#b45309"/>
+    <text x="300" y="127" text-anchor="end" style="font-size:11px;font-weight:700">C3</text>
+    <text x="300" y="189" text-anchor="end" style="font-size:11px;font-weight:700">C2</text>
+    <text x="300" y="254" text-anchor="end" style="font-size:11px;font-weight:700">C1</text>
+    <rect x="384" y="166" width="52" height="36" rx="4" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+    <text x="410" y="188" text-anchor="middle" style="font-size:11px;font-weight:700">D23</text>
+    <text x="410" y="222" text-anchor="middle" style="font-size:10px" fill="#78350f">three probes,</text>
+    <text x="410" y="235" text-anchor="middle" style="font-size:10px" fill="#78350f">one per level</text>
+  </g>
+</svg>
 
 </div>
 </div>
 
 <!--
+The hive has three levels: brood at the bottom, food (sugar) in the middle, an empty top.
+The D23 device has one probe per level: C1 brood, C2 food, C3 top. The S31 temperature and
+humidity sensor also sits in the brood level. The empty top mostly follows the outside air.
+
 The hardware detail is not trivia. Knowing that three *different device types* report
 on three *different schedules* is what makes Exercise 4 make sense.
 -->
 
 ---
 
-# Why are we collecting this data?
+# Why and how we are collecting this data
 
-<div class="grid grid-cols-2 gap-6 mt-4">
+<div class="grid grid-cols-2 gap-6 mt-2">
 <div>
 
 <div class="bh-kicker">Today</div>
 
-<div class="bh-card mt-3">
+<div class="bh-card mt-2">
 <div class="bh-card-h">🐝 Which material is best for the colony?</div>
 
 <span class="bh-small">
@@ -122,33 +158,48 @@ on three *different schedules* is what makes Exercise 4 make sense.
 </span>
 </div>
 
-</div>
-<div>
+<div class="bh-kicker mt-4">Later · machine learning</div>
 
-<div class="bh-kicker">Later · machine learning</div>
-
-<div class="bh-card mt-3">
+<div class="bh-card mt-2">
 <div class="bh-card-h">🌡️ Colony health</div>
 <span class="bh-small">Alert when brood temperature drifts.</span>
 </div>
 
-<div class="bh-card mt-3">
+<div class="bh-card mt-2">
 <div class="bh-card-h">❄️ Overwintering</div>
 <span class="bh-small">Flag hives at risk before winter losses.</span>
-</div>
-
-</div>
 </div>
 
 <div class="bh-note mt-5">
 Both need the same input: <strong>one clean row per hive per hour</strong>. That's what we build today.
 </div>
+</div>
+<div>
+
+<div class="bh-kicker">How</div>
+
+```mermaid {scale: 0.62, theme: 'base', themeVariables: {primaryColor: '#fef3c7', primaryBorderColor: '#f59e0b', primaryTextColor: '#92400e', lineColor: '#d97706', secondaryColor: '#fde68a', tertiaryColor: '#fffbeb', fontFamily: 'Inter, sans-serif'}}
+graph TD
+  A[Three probes<br/>Dragino D23-LB] --> G[LoRaWAN<br/>gateway]
+  B[Brood sensor<br/>Dragino S31-LB] --> G
+  C[Weather station<br/>SenseCAP S2120] --> G
+  G --> D[ChatBotCollector<br/>service]
+  D --> E[(PostgreSQL)]
+```
+
+<div class="bh-note mt-2">
+The collector is a service with bugs. <br>
+</div>
+
+</div>
+</div>
+
 
 <!--
 Pull the group toward the framing: we are not cleaning data for its own sake.
 
 Today: the three hives are wrapped in thermofolie, cotton and plastic. Other questions
-the data can answer: do the three brood probes in one hive agree? Does one hive go
+the data can answer: does the empty top level follow the outside temperature? Does one hive go
 silent more often than the others?
 
 Later: bees hold brood at ~35 °C, and it drifts *before* the beekeeper can see a
@@ -218,11 +269,11 @@ times the collector happened to insert the same row.
 7          8           1  LoRa-A84041892E5A7A68  LoRaWAN Dragino-D23-LB          tempC3,tempC1,tempC2
 8          9           2  LoRa-A840419521864618  LoRaWAN Dragino-D23-LB          tempC3,tempC1,tempC2
 </pre>
-<div class="bh-small mt-1">+ <code>installation_date</code>, <code>last_seen</code>, <code>is_active</code> · one weather station, one food sensor and one brood sensor per hive</div>
+<div class="bh-small mt-1">+ <code>installation_date</code>, <code>last_seen</code>, <code>is_active</code> · one weather station, one brood sensor and one three-probe device per hive</div>
 
 <!--
 Real rows from the database. Read the sensor_type column out loud: SenseCAP is the
-weather station, S31 is the food chamber, D23 is the brood chamber.
+weather station, S31 is the brood temperature and humidity sensor, D23 holds the three probes (C1 brood, C2 food, C3 empty top).
 
 Do not point out that sensors 1–3 share a sensor_name. That is Exercise 3's discovery.
 -->
@@ -233,18 +284,18 @@ Do not point out that sensors 1–3 share a sensor_name. That is Exercise 3's di
 
 <div class="bh-out-label mt-2">data · ~500k rows for three months · millions in total</div>
 <pre class="bh-out">   reading_id  sensor_id  beehive_id  measurement_unit                      ts  value
-0     2072737          8           1            tempC3 2026-06-28 12:22:52.471   37.3
-1     2072738          8           1            tempC1 2026-06-28 12:22:52.471   35.5
-2     2072739          8           1            tempC2 2026-06-28 12:22:52.471   35.7
-3     2072776          8           1            tempC3 2026-06-28 12:22:52.471   37.3
-4     2072777          8           1            tempC1 2026-06-28 12:22:52.471   35.5
-5     2072778          8           1            tempC2 2026-06-28 12:22:52.471   35.7
-6     2072732          6           2       temperature 2026-06-28 12:23:27.991   35.6
-7     2072733          6           2  relativeHumidity 2026-06-28 12:23:27.991   65.8
+0     2293351          8           1            tempC3 2026-08-07 13:11:37.873   32.6
+1     2293352          8           1            tempC1 2026-08-07 13:11:37.873   34.6
+2     2293353          8           1            tempC2 2026-08-07 13:11:37.873   31.0
+3     2293390          8           1            tempC3 2026-08-07 13:11:37.873   32.6
+4     2293391          8           1            tempC1 2026-08-07 13:11:37.873   34.6
+5     2293392          8           1            tempC2 2026-08-07 13:11:37.873   31.0
+6     2293385          6           2       temperature 2026-08-07 13:19:12.026   33.8
+7     2293386          6           2  relativeHumidity 2026-08-07 13:19:12.026   65.4
 </pre>
 
 <div class="bh-small mt-2">
-<strong>Long</strong> format: one row per <em>measurement</em>. A single uplink from brood sensor 8 writes three rows: <code>tempC1</code>, <code>tempC2</code>, <code>tempC3</code>.
+<strong>Long</strong> format: one row per <em>measurement</em>. A single uplink from probe device 8 writes three rows: <code>tempC1</code>, <code>tempC2</code>, <code>tempC3</code>.
 </div>
 
 <div class="grid grid-cols-2 gap-6 mt-4">
@@ -285,8 +336,8 @@ One row per hive per hour.
 |---|---|
 | `beehive_id`| which hive |
 | `hour` | the hour, **UTC** |
-| `brood_temp_c1/c2/c3` | brood chamber, three probes |
-| `food_temp`, `food_humidity` | food chamber |
+| `brood_probe_temp`, `food_probe_temp`, `top_probe_temp` | three probes, one per level: brood (C1), food (C2), empty top (C3) |
+| `brood_temp`, `brood_humidity` | temperature and humidity sensor in the brood level |
 | `hour_local`, `month`, `dayofweek` | calendar, **Europe/Berlin** |
 
 </div>
@@ -315,7 +366,7 @@ Green is not the goal. A table that passes but that you cannot explain is worse 
 |---|---|---|---|
 | **0** | **Extract** | Three tables, saved to disk | 10 min |
 | **1** | **Profile** | What is in the data | 30 min |
-| **2** | **Deduplicate** | One row per real reading | 30 min |
+| **2** | **Deduplicate** | One row per real reading | 15 min |
 | **3** | **Reshape & join** | A hive frame and a weather frame | 60 min |
 | **4** | **Align time & gaps** | One row per hive-hour | 30 min |
 | **5** | **Validate & document** | A validated file | 10 min |

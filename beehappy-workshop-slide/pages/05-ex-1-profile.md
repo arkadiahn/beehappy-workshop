@@ -15,7 +15,7 @@ What is actually in these tables?
 
 # First look: head
 
-<JupyterCell n="1">
+<JupyterCell n="2">
 
 ```python
 raw_sensor_readings.head()
@@ -31,7 +31,7 @@ raw_sensor_readings.head()
 </template>
 </JupyterCell>
 
-<JupyterCell n="2">
+<JupyterCell n="3">
 
 ```python
 raw_sensor_readings.head(10)
@@ -61,7 +61,7 @@ measurement, so one uplink becomes several rows with the same ts.
 
 # First look: tail and dtypes
 
-<JupyterCell n="3">
+<JupyterCell n="4">
 
 ```python
 raw_sensor_readings.tail()
@@ -80,7 +80,7 @@ raw_sensor_readings.tail()
 <div class="grid grid-cols-2 gap-6">
 <div>
 
-<JupyterCell n="4">
+<JupyterCell n="5">
 
 ```python
 raw_sensor_readings.dtypes
@@ -125,7 +125,7 @@ raw_sensor_readings[["ts", "value"]]           # several   -> DataFrame
 <div class="grid gap-4" style="grid-template-columns: 0.8fr 1fr">
 <div>
 
-<JupyterCell n="5">
+<JupyterCell n="6">
 
 ```python
 raw_sensor_readings["measurement_unit"]
@@ -150,7 +150,7 @@ Name: measurement_unit, Length: 515713, dtype: str</pre>
 </div>
 <div>
 
-<JupyterCell n="6">
+<JupyterCell n="7">
 
 ```python
 raw_sensor_readings["measurement_unit"].value_counts()
@@ -189,7 +189,7 @@ weather station both report them.
 <div class="grid grid-cols-2 gap-6">
 <div>
 
-<JupyterCell n="7" at="1">
+<JupyterCell n="8" at="1">
 
 ```python
 raw_sensor_readings["ts"].min()
@@ -200,7 +200,7 @@ raw_sensor_readings["ts"].min()
 </template>
 </JupyterCell>
 
-<JupyterCell n="8" at="2">
+<JupyterCell n="9" at="2">
 
 ```python
 raw_sensor_readings["ts"].max()
@@ -211,7 +211,7 @@ raw_sensor_readings["ts"].max()
 </template>
 </JupyterCell>
 
-<JupyterCell n="10" at="4">
+<JupyterCell n="11" at="4">
 
 ```python
 raw_sensor_readings["value"].isna().sum()
@@ -225,7 +225,7 @@ raw_sensor_readings["value"].isna().sum()
 </div>
 <div>
 
-<JupyterCell n="9" at="3">
+<JupyterCell n="10" at="3">
 
 ```python
 raw_sensor_readings["value"].isna()
@@ -262,7 +262,7 @@ the last sentence.
 <div class="grid grid-cols-2 gap-6">
 <div>
 
-<JupyterCell n="11">
+<JupyterCell n="12">
 
 ```python
 raw_sensor_readings["value"].describe()
@@ -287,7 +287,7 @@ A <code>max</code> of 111,404 is light in lux, in the same column as °C and pas
 </div>
 </div>
 
-<JupyterCell n="12">
+<JupyterCell n="13">
 
 ```python
 raw_sensor_readings.groupby("measurement_unit")["value"].describe()
@@ -320,7 +320,7 @@ s.median(), s.std(), s.quantile(0.99), s.idxmax().
 
 # The lookup tables
 
-<JupyterCell n="13">
+<JupyterCell n="14">
 
 ```python
 sensors.loc[0, "measurement_units"]
@@ -331,7 +331,7 @@ sensors.loc[0, "measurement_units"]
 </template>
 </JupyterCell>
 
-<JupyterCell n="14">
+<JupyterCell n="15">
 
 ```python
 beehives.loc[0, "location"]

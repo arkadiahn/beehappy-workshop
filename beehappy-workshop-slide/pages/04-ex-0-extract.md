@@ -42,20 +42,74 @@ with psycopg.connect(DATABASE_URL,
 
 <span class="bh-small" v-click="3">`cur.execute` sends the SQL, `cur.fetchall` pulls the rows back as a list of tuples, and `cur.description` carries the column names.</span>
 
+<div v-click="4" class="mt-4">
+
+```sql
+SELECT *       -- which columns: all
+FROM data      -- which table
+WHERE ts >= now() - INTERVAL '3 months'
+               -- which rows: the last 3 months
+```
+
+<span class="bh-small">Filter in SQL, so only three months cross the network.</span>
+
+</div>
+
 </div>
 </div>
 
 <!--
-Wait until everyone's cell 1 prints the host before moving on. Nobody gets further
+Wait until everyone's first cell prints the database URL before moving on. Nobody gets further
 without a working connection.
 
-Why the read-only role (grafana_ro): the superuser can DROP the live tables, and this is
-the real database, not a copy.
+Today's role is the postgres superuser (grafana_ro does not work), and this is the real
+database, not a copy. Only run the SELECTs in the notebook.
 
-The .env habit is the point even though today's URL is not a secret — the next one will be.
+The .env habit is the point: the password stays out of the notebook and out of git.
+
+SQL in ten seconds: SELECT picks columns, FROM picks the table, WHERE picks rows.
 
 If someone hangs on connect, it is almost always corporate wifi blocking port 45838 —
 have them tether to a phone.
+-->
+
+---
+
+# Read it back from disk
+
+<JupyterCell n="1" at="2">
+
+<div class="relative">
+<div v-click.hide="1">
+
+```python
+beehives = pd.read_parquet(...)
+sensors  = ...
+raw_sensor_readings = ...
+```
+
+</div>
+<div v-click="1" class="absolute inset-0">
+
+```python
+beehives = pd.read_parquet(RAW / "beehives.parquet")
+sensors  = pd.read_parquet(RAW / "sensors.parquet")
+raw_sensor_readings = pd.read_parquet(RAW / "data.parquet")
+```
+
+</div>
+</div>
+
+</JupyterCell>
+
+<div v-click="3" class="bh-note mt-4">
+<code>data.parquet</code> becomes <code>raw_sensor_readings</code>: the name says it is raw and not yet cleaned. Everything from Exercise 1 on starts from these three dataframes.
+</div>
+
+<!--
+Ask the room for the three lines before the reveal click. RAW is defined in the setup
+cell: workshop/out/raw/. Reading back from Parquet keeps every dtype, so ts is still a
+timestamp.
 -->
 
 ---

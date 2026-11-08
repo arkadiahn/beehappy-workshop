@@ -15,7 +15,7 @@ Local time. Target names. Prove the grain, then save.
 
 # Time zones: localize, then convert
 
-<JupyterCell n="38" at="2">
+<JupyterCell n="40" at="2">
 
 <div class="relative">
 <div v-click.hide="1">
@@ -36,7 +36,7 @@ local = features["hour"].dt.tz_localize("UTC").dt.tz_convert("Europe/Berlin")
 
 </JupyterCell>
 
-<JupyterCell n="39" at="3" label="did this window cross a clock change?">
+<JupyterCell n="41" at="3" label="did this window cross a clock change?">
 
 ```python
 local.dt.strftime("%z").unique()
@@ -49,7 +49,7 @@ Length: 2, dtype: str</pre>
 </template>
 </JupyterCell>
 
-<JupyterCell n="40" at="5">
+<JupyterCell n="42" at="5">
 
 <div class="relative">
 <div v-click.hide="4">
@@ -96,12 +96,12 @@ merge, hour is already a column.
 
 # Rename to the target schema
 
-<JupyterCell n="41">
+<JupyterCell n="43">
 
 ```python
 features = features.rename(columns={
-    "tempC1": "brood_temp_c1", "tempC2": "brood_temp_c2", "tempC3": "brood_temp_c3",
-    "temperature": "food_temp", "relativeHumidity": "food_humidity",
+    "tempC1": "brood_probe_temp", "tempC2": "food_probe_temp", "tempC3": "top_probe_temp",
+    "temperature": "brood_temp", "relativeHumidity": "brood_humidity",
     "outside_temperature": "outside_temp",
     "outside_relativeHumidity": "outside_humidity",
     "outside_windSpeed": "outside_wind_speed",
@@ -129,7 +129,7 @@ need renaming too.
 
 # Save and validate
 
-<JupyterCell n="42" at="2">
+<JupyterCell n="44" at="2">
 
 <div class="relative">
 <div v-click.hide="1">
@@ -171,7 +171,7 @@ uv run python workshop/validate_features.py workshop/out/features_hourly.parquet
   [PASS] row count                    6,627 = 3 hives x 2,209 hours
   [PASS] hourly grid complete         2,209 consecutive hours
   [PASS] values in range              every column inside plausible bounds
-  [PASS] missingness sane             worst column food_temp at 6.7% -- gaps kept honest
+  [PASS] missingness sane             worst column brood_temp at 6.7% -- gaps kept honest
   [PASS] weather shared across hives  one ambient value per hour
 
   All checks passed.</pre>

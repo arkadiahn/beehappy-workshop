@@ -42,7 +42,7 @@ beehive_id ts
 <div class="grid grid-cols-3 gap-4 mt-4">
 <div v-click class="bh-card">
 <div class="bh-card-h">Two sensors, one column</div>
-<span class="bh-small">30.7 is the food chamber, 29.0 the weather station. Both are <code>temperature</code>. No error.</span>
+<span class="bh-small">30.7 is the brood sensor, 29.0 the weather station. Both are <code>temperature</code>. No error.</span>
 </div>
 <div v-click class="bh-card">
 <div class="bh-card-h">One device per row</div>
@@ -57,12 +57,48 @@ beehive_id ts
 <!--
 Run this live or just click through: it runs, and that is the problem.
 
-Row 1 has no windSpeed, so it is the food chamber (Dragino-S31). Row 2 has windSpeed, so
+Row 1 has no windSpeed, so it is the brood sensor (Dragino-S31). Row 2 has windSpeed, so
 it is the weather station. Same column name, different devices. Row 3 is the brood
 sensor, which has none of these columns.
 
 The fix is the rest of this exercise: role tells the devices apart, the split keeps
 weather separate, and Exercise 4 floors to the hour and adds the outside_ prefix.
+-->
+
+---
+
+# First step: hive or weather?
+
+<div class="bh-note mt-2">
+The hives and the weather station measure different places, so in the final table they become different columns. First split every reading: does it belong to a <strong>hive</strong> or to the <strong>weather station</strong>?
+</div>
+
+<div class="grid grid-cols-2 gap-6 mt-5">
+
+<div v-click="1" class="bh-card">
+<div class="bh-card-h">Way 1 · by <code>measurement_unit</code> ✗</div>
+<span class="bh-small">Wind, UV, light, pressure and rain only come from the weather station. But <code>temperature</code> and <code>relativeHumidity</code> come from the weather station <strong>and</strong> the brood sensor, so the unit alone cannot tell them apart.</span>
+</div>
+
+<div v-click="2" class="bh-card">
+<div class="bh-card-h">Way 2 · by device role ✓</div>
+<span class="bh-small">Give every sensor a <code>role</code> from its <code>sensor_type</code>, attach it to each reading with a <code>merge</code>, then split on the role: <code>"weather"</code> or not.</span>
+</div>
+
+</div>
+
+<div v-click="3" class="bh-small mt-5">
+Next: <code>.map</code> to assign the roles, <code>merge</code> to attach them, a boolean filter to split.
+</div>
+
+<!--
+This is the "why" for the rest of Exercise 3. The previous slide showed the problem:
+the brood sensor and the weather station both land in "temperature".
+
+Ask the room first: how would you separate weather rows from hive rows? Someone will say
+"by measurement_unit". Click 1 shows why that half-works: the weather-only units are fine,
+but temperature and relativeHumidity are shared. Click 2: the device, not the unit, says
+where a reading comes from.
 -->
 
 ---
@@ -74,8 +110,8 @@ weather separate, and Exercise 4 floors to the hour and adds the outside_ prefix
 
 ```python
 ROLE = {
-    "LoRaWAN Dragino-S31-LB": "food_chamber",
-    "LoRaWAN Dragino-D23-LB": "brood_chamber",
+    "LoRaWAN Dragino-S31-LB": "brood_sensor",
+    "LoRaWAN Dragino-D23-LB": "probes",
     "LoRaWAN SenseCAP-S2120": "weather",
 }
 sensors = sensors.assign(
@@ -91,16 +127,16 @@ sensors = sensors.assign(
 <div>
 
 <div class="bh-out-label">sensors after .map()</div>
-<pre class="bh-out">   sensor_id  beehive_id             sensor_type           role
-0          1           1  LoRaWAN SenseCAP-S2120        weather
-1          2           2  LoRaWAN SenseCAP-S2120        weather
-2          3           3  LoRaWAN SenseCAP-S2120        weather
-3          4           1  LoRaWAN Dragino-S31-LB   food_chamber
-4          5           3  LoRaWAN Dragino-S31-LB   food_chamber
-5          6           2  LoRaWAN Dragino-S31-LB   food_chamber
-6          7           3  LoRaWAN Dragino-D23-LB  brood_chamber
-7          8           1  LoRaWAN Dragino-D23-LB  brood_chamber
-8          9           2  LoRaWAN Dragino-D23-LB  brood_chamber
+<pre class="bh-out">   sensor_id  beehive_id             sensor_type          role
+0          1           1  LoRaWAN SenseCAP-S2120       weather
+1          2           2  LoRaWAN SenseCAP-S2120       weather
+2          3           3  LoRaWAN SenseCAP-S2120       weather
+3          4           1  LoRaWAN Dragino-S31-LB  brood_sensor
+4          5           3  LoRaWAN Dragino-S31-LB  brood_sensor
+5          6           2  LoRaWAN Dragino-S31-LB  brood_sensor
+6          7           3  LoRaWAN Dragino-D23-LB        probes
+7          8           1  LoRaWAN Dragino-D23-LB        probes
+8          9           2  LoRaWAN Dragino-D23-LB        probes
 </pre>
 
 <div class="bh-note mt-3">
@@ -116,9 +152,80 @@ Look at the weather rows in <code>sensors</code> <strong>before</strong> you joi
 
 ---
 
+# Join types: a small example
+
+<div class="flex justify-center gap-10 mt-2">
+<div>
+<div class="bh-out-label">readings (left)</div>
+<pre class="bh-out" style="font-size:0.55rem">   sensor_id  value
+0          1   21.5
+1          4   30.7
+2         99   18.0</pre>
+</div>
+<div>
+<div class="bh-out-label">sensors (right)</div>
+<pre class="bh-out" style="font-size:0.55rem">   sensor_id          role
+0          1       weather
+1          4  brood_sensor
+2          8        probes</pre>
+</div>
+</div>
+
+<div class="bh-small text-center mt-2">Sensors 1 and 4 are in both tables. 99 is only in <code>readings</code>, 8 only in <code>sensors</code>.</div>
+
+<div class="grid grid-cols-4 gap-4 mt-5">
+
+<div v-click="1">
+<div class="bh-out-label">how="inner"</div>
+<pre class="bh-out" style="font-size:0.55rem">   sensor_id  value          role
+0          1   21.5       weather
+1          4   30.7  brood_sensor</pre>
+<div class="bh-small mt-1">Only keys in <strong>both</strong>. 99 and 8 are gone.</div>
+</div>
+
+<div v-click="2">
+<div class="bh-out-label">how="left"</div>
+<pre class="bh-out" style="font-size:0.55rem">   sensor_id  value          role
+0          1   21.5       weather
+1          4   30.7  brood_sensor
+2         99   18.0           NaN</pre>
+<div class="bh-small mt-1">Every <strong>left</strong> row. 99 has no role: <code>NaN</code>.</div>
+</div>
+
+<div v-click="3">
+<div class="bh-out-label">how="right"</div>
+<pre class="bh-out" style="font-size:0.55rem">   sensor_id  value          role
+0          1   21.5       weather
+1          4   30.7  brood_sensor
+2          8    NaN        probes</pre>
+<div class="bh-small mt-1">Every <strong>right</strong> row. Sensor 8 has no reading: <code>NaN</code>.</div>
+</div>
+
+<div v-click="4">
+<div class="bh-out-label">how="outer"</div>
+<pre class="bh-out" style="font-size:0.55rem">   sensor_id  value          role
+0          1   21.5       weather
+1          4   30.7  brood_sensor
+2          8    NaN        probes
+3         99   18.0           NaN</pre>
+<div class="bh-small mt-1"><strong>Everything</strong> from both, gaps filled with <code>NaN</code>.</div>
+</div>
+
+</div>
+
+<!--
+One question per click: which rows survive? The keys that match (1 and 4) are always
+there; the join type only decides what happens to the ones that do not.
+
+In the notebook we use how="left": every reading stays, even if its sensor were missing
+from the sensors table, and a missing role would show up as NaN instead of a vanished row.
+-->
+
+---
+
 # merge: joining two tables
 
-<JupyterCell n="19" at="2">
+<JupyterCell n="21" at="2">
 
 <div class="relative">
 <div v-click.hide="1">
@@ -180,7 +287,7 @@ If both sides have a column with the same name, pandas suffixes them _x and _y
 
 # A careless join
 
-<JupyterCell n="20">
+<JupyterCell n="22">
 
 ```python
 len(distinct_sensor_readings.merge(sensors[["beehive_id", "role"]], on="beehive_id", how="left"))
@@ -203,7 +310,7 @@ Let pandas check for you: <code>merge(..., validate="many_to_one")</code> raises
 
 # Filtering rows: hive vs weather
 
-<JupyterCell n="21" at="1">
+<JupyterCell n="23" at="1">
 
 ```python
 mask = sensors['role'] == 'weather'
@@ -218,7 +325,7 @@ sensors[mask]
 </template>
 </JupyterCell>
 
-<JupyterCell n="22" at="2">
+<JupyterCell n="24" at="2">
 
 <div class="relative">
 <div v-click.hide="3">
@@ -255,7 +362,7 @@ parentheses: df[(df["sensor_id"] == 8) & (df["value"] > 35)]
 
 # One weather station, stored three times
 
-<JupyterCell n="23" at="1">
+<JupyterCell n="25" at="1">
 
 ```python
 weather_rows["sensor_id"].unique()
@@ -266,7 +373,7 @@ weather_rows["sensor_id"].unique()
 </template>
 </JupyterCell>
 
-<JupyterCell n="24" at="2">
+<JupyterCell n="26" at="2">
 
 ```python
 weather_rows.sort_values("measurement_unit").head(6)
@@ -283,7 +390,7 @@ weather_rows.sort_values("measurement_unit").head(6)
 </template>
 </JupyterCell>
 
-<JupyterCell n="25" at="4">
+<JupyterCell n="27" at="4">
 
 <div class="relative">
 <div v-click.hide="3">
@@ -306,7 +413,7 @@ weather_rows = weather_rows.drop_duplicates(subset=["measurement_unit", "ts"])
 
 </JupyterCell>
 
-<JupyterCell n="26" at="5">
+<JupyterCell n="28" at="5">
 
 ```python
 weather_rows = weather_rows.drop(columns=["sensor_id", "beehive_id"])

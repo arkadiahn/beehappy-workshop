@@ -44,7 +44,7 @@ The last line is shown automatically: <code>df.head()</code> → a table.
 <div class="grid grid-cols-5 gap-6 mt-4">
 <div class="col-span-3">
 
-<JupyterCell n="1">
+<JupyterCell n="1" at="1">
 
 ```python
 data = pd.read_parquet("data.parquet")
@@ -56,7 +56,7 @@ data["temp"].mean()
 </template>
 </JupyterCell>
 
-<JupyterCell n="2" label="fix the scale">
+<JupyterCell n="2" at="2" rerun="3" rerun-n="3" label="fix the scale, then run the same cell again">
 
 ```python
 data["temp"] = data["temp"] / 10
@@ -66,16 +66,7 @@ data["temp"].mean()
 <template #output>
 <pre>34.7  ✅</pre>
 </template>
-</JupyterCell>
-
-<JupyterCell n="3" label="same cell, run again">
-
-```python
-data["temp"] = data["temp"] / 10
-data["temp"].mean()
-```
-
-<template #output>
+<template #rerun-output>
 <pre>3.47  ❌ no error, no warning</pre>
 </template>
 </JupyterCell>
@@ -87,7 +78,7 @@ data["temp"].mean()
 <strong>Cells remember.</strong> Re-running a cell that changes data changes it again.
 </div>
 
-<div v-click class="bh-note mt-4">
+<div v-click="4" class="bh-note mt-4">
 Fix: <strong>Restart Kernel and Run All</strong> before you trust a result.
 </div>
 
@@ -95,7 +86,8 @@ Fix: <strong>Restart Kernel and Run All</strong> before you trust a result.
 </div>
 
 <!--
-The sensor sends deci-degrees, so cell 1 shows 347.0. Click through the three cells.
+The sensor sends deci-degrees, so cell 1 shows 347.0. Click 2 runs the fix; click 3 runs
+the same cell again, which divides by 10 a second time.
 
 Anything that transforms a column in place, appends, or merges is unsafe to re-run.
 

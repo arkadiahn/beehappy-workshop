@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // A fake Jupyter cell: In [ ] → In [*] (running) → In [n] with output, on one click.
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+// Optional re-run: on the `rerun` click it runs again → In [rerunN] with the #rerun-output slot.
+import { computed, onMounted, onUnmounted, ref, useSlots, watch } from 'vue'
 import { useSlideContext } from '@slidev/client'
 
 const props = withDefaults(defineProps<{
@@ -8,45 +9,67 @@ const props = withDefaults(defineProps<{
   at?: number | string
   delay?: number
   label?: string
+  rerun?: number | string
+  rerunN?: number | string
 }>(), { at: '+1', delay: 700 })
 
+const slots = useSlots()
 const { $clicksContext: clicks, $renderContext } = useSlideContext()
 const id = `jupyter-cell-${Math.random().toString(36).slice(2)}`
-const active = ref(false)
-const state = ref<'idle' | 'running' | 'done'>('idle')
+// phase 0: never run, 1: first run, 2: re-run
+const phase = ref(0)
+const running = ref(false)
 let timer: ReturnType<typeof setTimeout> | undefined
 
 // Overview and thumbnails skip the animation and show the finished cell.
 const animate = computed(() => ['slide', 'presenter'].includes($renderContext.value))
+const hasRerun = computed(() => props.rerun != null)
+
+function goTo(target: number) {
+  clearTimeout(timer)
+  if (target > phase.value && animate.value) {
+    running.value = true
+    timer = setTimeout(() => {
+      running.value = false
+      phase.value = target
+    }, props.delay)
+  }
+  else {
+    running.value = false
+    phase.value = target
+  }
+}
 
 onMounted(() => {
   const info = clicks.calculateSince(props.at, 1)
   if (!info) {
-    state.value = 'done'
+    phase.value = hasRerun.value ? 2 : 1
     return
   }
   clicks.register(id, info)
-  watch(info.isActive, (isActive) => {
-    clearTimeout(timer)
-    if (!isActive) {
-      state.value = 'idle'
-    }
-    else if (animate.value) {
-      state.value = 'running'
-      timer = setTimeout(() => { state.value = 'done' }, props.delay)
-    }
-    else {
-      state.value = 'done'
-    }
-  }, { immediate: true })
+  const rerunInfo = hasRerun.value ? clicks.calculateSince(props.rerun!, 1) : null
+  if (rerunInfo)
+    clicks.register(`${id}-rerun`, rerunInfo)
+  watch(
+    () => [info.isActive.value, rerunInfo?.isActive.value ?? false],
+    ([first, again]) => goTo(again ? 2 : first ? 1 : 0),
+    { immediate: true },
+  )
 })
 
 onUnmounted(() => {
   clearTimeout(timer)
   clicks.unregister(id)
+  clicks.unregister(`${id}-rerun`)
 })
 
-const prompt = computed(() => ({ idle: ' ', running: '*', done: props.n })[state.value])
+const state = computed(() => running.value ? 'running' : phase.value > 0 ? 'done' : 'idle')
+const prompt = computed(() => {
+  if (running.value)
+    return '*'
+  return [' ', props.n, props.rerunN ?? props.n][phase.value]
+})
+const showRerunOutput = computed(() => phase.value === 2 && !!slots['rerun-output'])
 </script>
 
 <template>
@@ -58,7 +81,10 @@ const prompt = computed(() => ({ idle: ' ', running: '*', done: props.n })[state
     </div>
     <div class="jc-row jc-out-row">
       <div class="jc-prompt" />
-      <div class="jc-output"><slot name="output" /></div>
+      <div class="jc-output">
+        <slot v-if="showRerunOutput" name="rerun-output" />
+        <slot v-else name="output" />
+      </div>
     </div>
   </div>
 </template>

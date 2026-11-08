@@ -15,7 +15,7 @@ One clock. Long to wide. Every hive-hour, even the silent ones.
 
 # Floor timestamps to the hour
 
-<JupyterCell n="27">
+<JupyterCell n="29">
 
 ```python
 hive_rows = hive_rows.assign(hour=hive_rows["ts"].dt.floor("h"))
@@ -50,7 +50,7 @@ string: pd.to_datetime(col) fixes it, or they saved CSV in Exercise 0.
 
 # groupby + mean: still long
 
-<JupyterCell n="28">
+<JupyterCell n="30">
 
 ```python
 hive_hourly = hive_rows.groupby(["beehive_id", "hour", "measurement_unit"])["value"].mean()
@@ -82,7 +82,7 @@ Pass observed=True when grouping categoricals to avoid materialising unused comb
 
 # Long → wide: unstack
 
-<JupyterCell n="29" at="1">
+<JupyterCell n="31" at="1">
 
 ```python
 hive_hourly = hive_hourly.unstack("measurement_unit")
@@ -100,7 +100,7 @@ beehive_id hour
 </template>
 </JupyterCell>
 
-<JupyterCell n="30" at="2" label="same three verbs for weather">
+<JupyterCell n="32" at="2" label="same three verbs for weather">
 
 <div class="relative">
 <div v-click.hide="3">
@@ -123,7 +123,7 @@ weather_hourly = weather_rows.groupby(["hour", "measurement_unit"])["value"].mea
 
 </JupyterCell>
 
-<JupyterCell n="31" at="4">
+<JupyterCell n="33" at="4">
 
 ```python
 weather_hourly = weather_hourly.unstack("measurement_unit").add_prefix("outside_")
@@ -132,7 +132,7 @@ weather_hourly = weather_hourly.unstack("measurement_unit").add_prefix("outside_
 </JupyterCell>
 
 <div v-click="5" class="bh-small mt-3">
-Weather has no hive: its grain is just <code>hour</code>. <code>add_prefix</code> stops <code>temperature</code> clashing with the food chamber's.
+Weather has no hive: its grain is just <code>hour</code>. <code>add_prefix</code> stops <code>temperature</code> clashing with the brood sensor's.
 </div>
 
 <!--
@@ -150,7 +150,7 @@ Ask the room for the weather groupby keys before the reveal click.
 <strong>Invisible NULLs.</strong> A power outage or a broken sensor leaves no NULL behind: the row is simply missing. A complete grid turns every missing hour into a row of <code>NaN</code> you can count.
 </div>
 
-<JupyterCell n="32" at="2">
+<JupyterCell n="34" at="2">
 
 <div class="relative">
 <div v-click.hide="1">
@@ -175,7 +175,7 @@ hours = pd.date_range(START_TIME_H, END_TIME_H, freq="h", name="hour")
 
 </JupyterCell>
 
-<JupyterCell n="33" at="3" label="every hive × every hour">
+<JupyterCell n="35" at="3" label="every hive × every hour">
 
 ```python
 grid = pd.MultiIndex.from_product(
@@ -190,7 +190,7 @@ print(f"hive hours: {len(hive_hourly):,} observed vs {len(features):,} complete"
 </template>
 </JupyterCell>
 
-<JupyterCell n="34" at="4" label="weather: every hour, no hive">
+<JupyterCell n="36" at="4" label="weather: every hour, no hive">
 
 ```python
 observed = len(weather_hourly)
@@ -216,7 +216,7 @@ station has no missing hours in this window.
 
 # Measuring gaps
 
-<JupyterCell n="35">
+<JupyterCell n="37">
 
 ```python
 hive_hourly.reset_index().groupby("beehive_id")["hour"].diff()
@@ -238,7 +238,7 @@ Name: hour, Length: 6564, dtype: timedelta64[us]</pre>
 </template>
 </JupyterCell>
 
-<JupyterCell n="36" label="the longest gap">
+<JupyterCell n="38" label="the longest gap">
 
 ```python
 hive_hourly.reset_index().groupby("beehive_id")["hour"].diff().max()
@@ -263,7 +263,7 @@ The first row of each hive is NaT: there is no previous hour to compare with.
 
 # Attach the weather: merge on hour
 
-<JupyterCell n="37" at="2">
+<JupyterCell n="39" at="2">
 
 <div class="relative">
 <div v-click.hide="1">

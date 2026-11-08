@@ -21,13 +21,13 @@ import pandas as pd
 REQUIRED_COLUMNS: dict[str, str] = {
     "beehive_id": "num",
     "hour": "datetime",
-    # brood chamber, three probes on one device
-    "brood_temp_c1": "num",
-    "brood_temp_c2": "num",
-    "brood_temp_c3": "num",
-    # food chamber
-    "food_temp": "num",
-    "food_humidity": "num",
+    # three probes on one device, one per level: brood (C1), food (C2), empty top (C3)
+    "brood_probe_temp": "num",
+    "food_probe_temp": "num",
+    "top_probe_temp": "num",
+    # temperature and humidity sensor in the brood level
+    "brood_temp": "num",
+    "brood_humidity": "num",
     # ambient
     "outside_temp": "num",
     "outside_humidity": "num",
@@ -45,11 +45,11 @@ REQUIRED_COLUMNS: dict[str, str] = {
 
 # Generous bounds. These catch unit mistakes and bad joins, not unusual weather.
 RANGES: dict[str, tuple[float, float]] = {
-    "brood_temp_c1": (-20, 55),
-    "brood_temp_c2": (-20, 55),
-    "brood_temp_c3": (-20, 55),
-    "food_temp": (-20, 55),
-    "food_humidity": (0, 100),
+    "brood_probe_temp": (-20, 55),
+    "food_probe_temp": (-20, 55),
+    "top_probe_temp": (-20, 55),
+    "brood_temp": (-20, 55),
+    "brood_humidity": (0, 100),
     "outside_temp": (-30, 55),
     "outside_humidity": (0, 100),
     "outside_wind_speed": (0, 60),
